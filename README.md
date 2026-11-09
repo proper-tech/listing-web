@@ -3,7 +3,7 @@
 `real-estate-platform-plan.md`-ийн дагуу хийсэн ажиллах прототип: Phase 1 бүхэлдээ, Phase 2-оос 360° хэсэг.
 
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
-- **Backend:** хамааралгүй Node.js API сервер (`server/`), өгөгдөл JSON файлд
+- **Backend:** тусдаа төсөл — [`listing-server`](../listing-server) (хамааралгүй Node.js API, өгөгдөл JSON файлд)
 
 ## Ажиллуулах
 
@@ -13,13 +13,19 @@ Node.js 20+ хэрэгтэй. Анх удаа:
 npm install
 ```
 
-Хөгжүүлэлтийн горим (API + Next.js хоёуланг нь асаана):
+Эхлээд API серверийг тусад нь асаана (`../listing-server` дотор):
 
 ```bash
 npm run dev
 ```
 
-http://localhost:3000 нээнэ. API нь http://localhost:4000 дээр ажиллах бөгөөд Next.js `/api/*`, `/uploads/*` хүсэлтийг тийш дамжуулна ([next.config.ts](next.config.ts)).
+Дараа нь энэ төсөлд:
+
+```bash
+npm run dev
+```
+
+http://localhost:3000 нээнэ. Next.js `/api/*`, `/uploads/*` хүсэлтийг `API_URL` (default http://localhost:4000) руу дамжуулна ([next.config.ts](next.config.ts)).
 
 Production горим:
 
@@ -31,10 +37,14 @@ npm run build
 npm start
 ```
 
-- Анх асаахад жишээ зар, зургуудыг `server/data/` болон `server/uploads/demo*`-д үүсгэнэ (~5 сек).
-  Өгөгдлийг шинэчлэх бол `server/data/db.json`-г устгаад дахин асаана.
-- Админ түлхүүр: `admin` (`ADMIN_KEY` орчны хувьсагчаар солино).
-- Орчны хувьсагч: `API_PORT` (default 4000), `API_URL` (Next.js-ээс API руу, default `http://localhost:4000`).
+- Орчны хувьсагч: `API_URL` — API серверийн хаяг (default `http://localhost:4000`).
+- Жишээ өгөгдөл, админ түлхүүр зэргийг [`listing-server`](../listing-server) README-с үзнэ үү.
+
+## Vercel дээр байршуулах
+
+1. API серверийг байнгын дисктэй хостинг дээр байршуулна ([`listing-server`](../listing-server) README).
+2. Vercel төслийн Environment Variables-д `API_URL=https://<api-хаяг>` нэмнэ (Production + Preview).
+3. Deploy хийнэ. `API_URL` нь build үед rewrite-д шингэдэг тул өөрчилсний дараа дахин deploy хийнэ.
 
 ## Бүтэц
 
@@ -48,7 +58,6 @@ app/                  Next.js хуудсууд
   help/ pricing/      Статик хуудас
 components/           React компонентууд (TourViewer, Maps, PostWizard, ...)
 lib/                  Төрлүүд, тогтмолууд, API, localStorage, 360° холбогч (stitch.js)
-server/               Node API сервер, жишээ өгөгдөл үүсгэгч, data/, uploads/
 ```
 
 - **360° viewer:** Pannellum (CDN-ээс), **газрын зураг:** Leaflet + OpenStreetMap

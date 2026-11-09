@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
-// Node API сервер (server/server.js). Хөтчөөс ирсэн /api, /uploads хүсэлтийг тийш дамжуулна.
+// API сервер нь тусдаа төсөл (listing-server). Хөтчөөс ирсэн /api, /uploads хүсэлтийг тийш дамжуулна.
+// Production дээр (Vercel) API_URL орчны хувьсагчийг API серверийн URL болгож тохируулна.
 const API_URL = process.env.API_URL || 'http://localhost:4000';
 
 const nextConfig: NextConfig = {
