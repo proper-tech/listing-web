@@ -26,7 +26,7 @@ h1 { font-size: 24px; margin: 0 0 8px; } h2 { font-size: 19px; margin: 24px 0 12
 .btn-danger { color: var(--danger); }
 .btn-sm { padding: 5px 10px; font-size: 13px; border-radius: 8px; }
 .btn-block { width: 100%; }
-input[type=text], input[type=number], input[type=tel], input[type=search], input[type=password], select, textarea {
+input[type=text], input[type=number], input[type=tel], input[type=search], input[type=password], input[type=email], select, textarea {
   width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; font: inherit; background: var(--surface); color: var(--text);
 }
 textarea { min-height: 120px; resize: vertical; }
@@ -214,4 +214,21 @@ label.field > span { display: block; font-size: 13px; color: var(--muted); margi
 .card-link { color: inherit; display: contents; }
 .fav-btn-row .btn.on { color: var(--danger); }
 .error-page { padding: 48px 0; text-align: center; }
+
+
+/* auth */
+.user-box { display: flex; align-items: center; gap: 8px; }
+.user-name { display: flex; flex-direction: column; line-height: 1.15; color: var(--text); font-weight: 600; font-size: 14px; max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.user-name small { color: var(--muted); font-weight: 500; font-size: 11px; }
+.auth-card { max-width: 400px; margin: 48px auto; }
+.auth-card h1 { margin-bottom: 4px; }
+.warn-box { background: #fff9db; border: 1px solid #ffe066; border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 12px; }
+@media (max-width: 640px) {
+  .user-name { display: none; }
+  .user-box .post-btn { padding: 8px 10px; }
+}
+.nav a, .badge { white-space: nowrap; }
+@media (max-width: 960px) { .user-name { display: none; } .nav a { padding: 8px 8px; } }
+
+.error-text { color: var(--danger); font-size: 13px; }
 

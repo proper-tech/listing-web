@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import Header from '@/components/Header';
 import { ToastProvider } from '@/components/Toast';
+import { AuthProvider } from '@/components/Auth';
 import { PANNELLUM_CSS } from '@/lib/constants';
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ToastProvider>
+         <AuthProvider>
           <Suspense fallback={<header className="topbar" />}>
             <Header />
           </Suspense>
@@ -31,10 +33,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="footer-links">
                 <Link href="/help">Тусламж ба 360° зураг авах заавар</Link>
                 <Link href="/pricing">Үнэ</Link>
-                <Link href="/admin">Админ</Link>
+                <Link href="/login">Агент, админ нэвтрэх</Link>
               </div>
             </div>
           </footer>
+         </AuthProvider>
         </ToastProvider>
       </body>
     </html>

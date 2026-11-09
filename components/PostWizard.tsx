@@ -1,13 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import type { Category, DealType, Hotspot, Placement, SellerType, TourRoom } from '@/lib/types';
+import type { Category, DealType, Hotspot, Placement, SellerType, TourRoom, User } from '@/lib/types';
 import {
   CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, ROOM_NAMES, type FieldKey,
 } from '@/lib/constants';
 import { fmtFull, fmtPrice } from '@/lib/format';
 import { api } from '@/lib/api';
-import { store } from '@/lib/store';
 import { canvasToBlob, resizeImage, upload } from '@/lib/images';
 import { getPannellum, type PannellumViewer } from '@/lib/pannellum';
 import { stitch } from '@/lib/stitch';
@@ -27,28 +26,29 @@ interface Draft {
   location: { district: string; khoroo: string; address: string; lat: number | null; lng: number | null };
   sellerName: string; sellerPhone: string; sellerType: SellerType; placement: Placement; payMethod: string;
 }
-const newDraft = (): Draft => ({
+const newDraft = (user: User): Draft => ({
   dealType: 'sale', category: 'apartment', title: '', price: '', description: '', fields: {}, garage: false, leasing: false, paymentTerms: ['Бэлэн'],
   photos: [], tour: { startRoomId: null, rooms: [] },
   location: { district: '', khoroo: '', address: '', lat: null, lng: null },
-  sellerName: '', sellerPhone: '', sellerType: 'owner', placement: 'free', payMethod: 'qpay',
+  sellerName: user.name, sellerPhone: user.phone, sellerType: 'agent', placement: 'free', payMethod: 'qpay',
 });
-// Keeps an unfinished draft while the user browses other pages (until a full reload).
-let draftCache: Draft | null = null;
+// Keeps an unfinished draft while the user browses other pages (until a full reload),
+// but never hands one user's draft to another.
+let draftCache: { userId: string; draft: Draft } | null = null;
 
 const STEP_NAMES = ['Ангилал', 'Мэдээлэл', 'Зураг', '360° аялал', 'Байршил', 'Холбоо барих', 'Нийтлэх'];
 const uid = () => Math.random().toString(36).slice(2, 8);
 
 type SetDraft = React.Dispatch<React.SetStateAction<Draft>>;
 
-export default function PostWizard() {
+export default function PostWizard({ user }: { user: User }) {
   const toast = useToast();
-  const [d, setD] = useState<Draft>(() => draftCache ?? newDraft());
+  const [d, setD] = useState<Draft>(() => (draftCache?.userId === user.id ? draftCache.draft : newDraft(user)));
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ id: string } | null>(null);
-  useEffect(() => { draftCache = d; }, [d]);
+  const [done, setDone] = useState<{ id: string; status: string } | null>(null);
+  useEffect(() => { draftCache = { userId: user.id, draft: d }; }, [d, user.id]);
 
   function validate(s: number): string | null {
     if (s === 1) {
@@ -85,21 +85,25 @@ export default function PostWizard() {
       location: d.location, sellerName: d.sellerName, sellerPhone: d.sellerPhone, sellerType: d.sellerType, placement: d.placement,
     };
     try {
-      const res = await api<{ id: string; token: string }>('/api/listings', { method: 'POST', body: JSON.stringify(body) });
-      store.set('tokens', [...store.get<string[]>('tokens', []), res.token]);
+      const res = await api<{ id: string; status: string }>('/api/listings', { method: 'POST', body: JSON.stringify(body) });
       draftCache = null;
-      setDone({ id: res.id });
+      setDone(res);
     } catch (e) { setError((e as Error).message); }
     setBusy(false);
   }
 
   if (done) {
+    const live = done.status === 'active';
     return (
       <div className="panel" style={{ maxWidth: 560, margin: '40px auto', textAlign: 'center' }}>
-        <div style={{ fontSize: 44 }}>✅</div><h1>Зар илгээгдлээ</h1>
-        <p>Зарын дугаар: <b>{done.id}</b>. Админ шалгаж баталсны дараа нийтэд харагдана.</p>
-        <p><Link className="btn btn-primary" href="/my">Миний зар</Link> <Link className="btn" href="/admin">Админ самбар (демо)</Link></p>
-        <button className="btn btn-sm" onClick={() => { setD(newDraft()); setDone(null); setStep(0); }}>Шинэ зар нэмэх</button>
+        <div style={{ fontSize: 44 }}>✅</div><h1>{live ? 'Зар нийтлэгдлээ' : 'Зар илгээгдлээ'}</h1>
+        <p>Зарын дугаар: <b>{done.id}</b>. {live ? 'Нийтэд харагдаж байна.' : 'Админ шалгаж баталсны дараа нийтэд харагдана.'}</p>
+        <p>
+          {live && <><Link className="btn btn-primary" href={`/listing/${done.id}`}>Зарыг харах</Link>{' '}</>}
+          <Link className={`btn ${live ? '' : 'btn-primary'}`} href="/my">Миний зар</Link>
+          {user.role === 'admin' && <>{' '}<Link className="btn" href="/admin">Админ самбар</Link></>}
+        </p>
+        <button className="btn btn-sm" onClick={() => { setD(newDraft(user)); setDone(null); setStep(0); }}>Шинэ зар нэмэх</button>
       </div>
     );
   }
@@ -114,7 +118,7 @@ export default function PostWizard() {
             onClick={() => { if (i <= step) go(i); else next(); }}>{i + 1}. {n}</button>
         ))}
       </div>
-      <div className="panel"><Step d={d} setD={setD} toast={toast} /></div>
+      <div className="panel"><Step d={d} setD={setD} toast={toast} user={user} /></div>
       {error && <div className="error-box" style={{ marginTop: 12 }}>{error}</div>}
       <div className="wizard-nav">
         <button className="btn" disabled={step === 0} onClick={() => go(step - 1)}>‹ Буцах</button>
@@ -126,7 +130,7 @@ export default function PostWizard() {
   );
 }
 
-type StepProps = { d: Draft; setD: SetDraft; toast: (m: string) => void };
+type StepProps = { d: Draft; setD: SetDraft; toast: (m: string) => void; user: User };
 
 /* ---------- 1. category ---------- */
 function StepCategory({ d, setD }: StepProps) {
@@ -474,7 +478,7 @@ function StepLocation({ d, setD }: StepProps) {
 }
 
 /* ---------- 6. contact + preview ---------- */
-function StepContact({ d, setD }: StepProps) {
+function StepContact({ d, setD, user }: StepProps) {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
   const num = (k: FieldKey) => Number(d.fields[k]) || undefined;
   const preview = {
@@ -492,9 +496,11 @@ function StepContact({ d, setD }: StepProps) {
         <div>
           <label className="field"><span>Нэр *</span><input type="text" maxLength={60} value={d.sellerName} onChange={(e) => set('sellerName', e.target.value)} /></label>
           <label className="field"><span>Утасны дугаар *</span><input type="tel" maxLength={11} placeholder="8 оронтой" value={d.sellerPhone} onChange={(e) => set('sellerPhone', e.target.value)} /></label>
-          <label className="field"><span>Зар оруулагч</span>
-            <select value={d.sellerType} onChange={(e) => set('sellerType', e.target.value as SellerType)}><option value="owner">Эзэмшигч</option><option value="agent">Агент</option></select></label>
-          <p className="muted small">Утасны дугаар зар дээр шууд харагдахгүй — &quot;Утасны дугаар харах&quot; товч дарсан хүнд л харагдана. Жинхэнэ сайтад SMS кодоор баталгаажуулна.</p>
+          {user.role === 'admin' ? (
+            <label className="field"><span>Зар оруулагч</span>
+              <select value={d.sellerType} onChange={(e) => set('sellerType', e.target.value as SellerType)}><option value="agent">Агент</option><option value="owner">Эзэмшигч</option></select></label>
+          ) : <p className="muted small">Зар &quot;Агент&quot; гэж харагдана. Нэр, утсыг таны бүртгэлээс бөглөсөн; энэ зарт зориулж өөрчилж болно.</p>}
+          <p className="muted small">Утасны дугаар зар дээр шууд харагдахгүй — &quot;Утасны дугаар харах&quot; товч дарсан хүнд л харагдана.</p>
         </div>
         <div><div className="muted small" style={{ marginBottom: 6 }}>Карт ингэж харагдана:</div><div style={{ maxWidth: 300 }}><ListingCard l={preview} preview /></div></div>
       </div>
