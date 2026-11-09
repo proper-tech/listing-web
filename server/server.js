@@ -1,15 +1,15 @@
 'use strict';
 // Гэр360 — үл хөдлөх хөрөнгийн зарын сайтын прототип.
-// Хамаарал шаардахгүй Node.js сервер: статик файл, JSON API, зураг хадгалах.
+// Хамаарал шаардахгүй Node.js API сервер: JSON API, зураг хадгалах, /uploads.
+// Next.js (порт 3000) /api болон /uploads хүсэлтийг энд (порт 4000) дамжуулна.
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.API_PORT) || 4000;
 const ADMIN_KEY = process.env.ADMIN_KEY || 'admin';
-const PUB = path.join(__dirname, 'public');
-const UP = path.join(PUB, 'uploads');
+const UP = path.join(__dirname, 'uploads');
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
@@ -313,18 +313,17 @@ async function handleApi(req, res, u) {
   throw httpError(404, 'API олдсонгүй');
 }
 
-/* ---------- static ---------- */
+/* ---------- uploaded images (/uploads/...) ---------- */
 function serveStatic(req, res, pathname) {
-  let rel = decodeURIComponent(pathname);
-  if (rel === '/') rel = '/index.html';
-  const fp = path.normalize(path.join(PUB, rel));
-  if (!fp.startsWith(PUB + path.sep)) { res.writeHead(403); return res.end(); }
+  const rel = decodeURIComponent(pathname).replace(/^\/uploads\//, '');
+  const fp = path.normalize(path.join(UP, rel));
+  if (!fp.startsWith(UP + path.sep)) { res.writeHead(403); return res.end(); }
   fs.stat(fp, (err, st) => {
     if (err || !st.isFile()) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('Олдсонгүй'); }
     res.writeHead(200, {
       'content-type': MIME[path.extname(fp).toLowerCase()] || 'application/octet-stream',
       'content-length': st.size,
-      'cache-control': rel.startsWith('/uploads/') ? 'public, max-age=86400' : 'no-cache',
+      'cache-control': 'public, max-age=86400',
       'x-content-type-options': 'nosniff',
     });
     fs.createReadStream(fp).pipe(res);
@@ -335,9 +334,11 @@ http.createServer(async (req, res) => {
   try {
     const u = new URL(req.url, 'http://localhost');
     if (u.pathname.startsWith('/api/')) return await handleApi(req, res, u);
-    return serveStatic(req, res, u.pathname);
+    if (u.pathname.startsWith('/uploads/')) return serveStatic(req, res, u.pathname);
+    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    return res.end('Гэр360 API. Сайтыг http://localhost:3000 дээр нээнэ үү.');
   } catch (e) {
     if (!e.status) console.error(e);
     if (!res.headersSent) send(res, e.status || 500, { error: e.status ? e.message : 'Серверийн алдаа' });
   }
-}).listen(PORT, () => console.log(`Гэр360: http://localhost:${PORT}  (админ түлхүүр: ${ADMIN_KEY === 'admin' ? 'admin' : '***'})`));
+}).listen(PORT, () => console.log(`Гэр360 API: http://localhost:${PORT}  (админ түлхүүр: ${ADMIN_KEY === 'admin' ? 'admin' : '***'})`));

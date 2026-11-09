@@ -1,0 +1,72 @@
+export type Category = 'apartment' | 'house' | 'land' | 'office' | 'shop' | 'warehouse' | 'garage' | 'summer_house';
+export type DealType = 'sale' | 'rent';
+export type ListingStatus = 'draft' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected';
+export type Placement = 'free' | 'vip' | 'top';
+export type SellerType = 'owner' | 'agent' | 'company';
+
+export interface Img { src: string; width: number; height: number }
+
+export interface Hotspot { yaw: number; pitch: number; targetRoomId: string; label?: string }
+
+export interface TourRoom {
+  id: string;
+  name: string;
+  source: 'upload360' | 'stitched' | 'ai' | 'splat';
+  panorama?: Img;
+  status: 'processing' | 'ready' | 'failed';
+  error?: string;
+  startYaw: number;
+  hotspots: Hotspot[];
+  floorPlanPosition?: [number, number];
+}
+
+export interface Tour { startRoomId: string | null; rooms: TourRoom[] }
+
+export interface ListingLocation {
+  city?: string; district: string; khoroo?: string; address?: string; lat: number; lng: number;
+}
+
+export interface Listing {
+  id: string;
+  sellerName: string;
+  sellerType: SellerType;
+  category: Category;
+  dealType: DealType;
+  title: string;
+  price: number;
+  pricePerM2?: number;
+  rooms?: number;
+  area?: number;
+  floor?: number;
+  buildingFloors?: number;
+  yearInUse?: number;
+  floorMaterial?: string;
+  balconies?: number;
+  windowType?: string;
+  windowCount?: number;
+  doorType?: string;
+  garage?: boolean;
+  leasing?: boolean;
+  paymentTerms?: string[];
+  location: ListingLocation;
+  description?: string;
+  photos: Img[];
+  tour?: Tour;
+  placement: Placement;
+  placementUntil?: string;
+  status: ListingStatus;
+  views: number;
+  createdAt: string;
+  expiresAt: string;
+  /** computed by the API */
+  hasTour: boolean;
+  /** 2 = top, 1 = vip, 0 = none (only while the placement is paid up) */
+  promo: number;
+}
+
+export interface MyListing extends Listing { token: string }
+export interface AdminListing extends Listing { ownerPhone: string; reports: number }
+export interface Report { id: string; listingId: string; reason: string; note?: string; createdAt: string }
+
+export interface SearchResult { total: number; page: number; per: number; items: Listing[] }
+export interface Stats { counts: Record<string, number>; total: number }

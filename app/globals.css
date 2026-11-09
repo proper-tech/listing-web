@@ -210,3 +210,8 @@ label.field > span { display: block; font-size: 13px; color: var(--muted); margi
   .row2 { grid-template-columns: 1fr 1fr; }
   .grid { grid-template-columns: 1fr; }
 }
+
+.card-link { color: inherit; display: contents; }
+.fav-btn-row .btn.on { color: var(--danger); }
+.error-page { padding: 48px 0; text-align: center; }
+
