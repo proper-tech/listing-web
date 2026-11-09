@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Гэр360 — Үл хөдлөх хөрөнгийн зар, 360° аялал</title>
+  <meta name="description" content="Орон сууц, хашаа байшин, газар, оффис зарна, түрээслүүлнэ. Байраа 360° аялалаар үзээрэй.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a href="#/" class="logo"><span class="logo-mark">360</span>Гэр360</a>
+      <nav class="nav" id="nav">
+        <a href="#/search?deal=sale" data-nav="sale">Зарна</a>
+        <a href="#/search?deal=rent" data-nav="rent">Түрээс</a>
+        <a href="#/saved" data-nav="saved">Хадгалсан <span class="count" id="favCount"></span></a>
+        <a href="#/my" data-nav="my">Миний зар</a>
+      </nav>
+      <a href="#/post" class="btn btn-primary post-btn">+ Зар нэмэх</a>
+    </div>
+  </header>
+  <main id="app" class="wrap"><div class="loading">Ачаалж байна…</div></main>
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div><b>Гэр360</b> — үл хөдлөх хөрөнгийн зар, 360° аялалтай. Прототип.</div>
+      <div class="footer-links">
+        <a href="#/help">Тусламж ба 360° зураг авах заавар</a>
+        <a href="#/pricing">Үнэ</a>
+        <a href="#/admin">Админ</a>
+      </div>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
+  <script src="/stitch.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
