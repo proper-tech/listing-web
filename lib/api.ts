@@ -15,7 +15,7 @@ export async function serverApi<T = unknown>(path: string): Promise<T> {
   try {
     r = await fetch(base + path, { cache: 'no-store' });
   } catch {
-    throw new Error('API сервер ажиллахгүй байна. "npm run dev" командаар хоёуланг нь асаана уу.');
+    throw new Error(`API сервер (${base}) ажиллахгүй байна. listing-server төслийг асаах эсвэл API_URL-ыг шалгана уу.`);
   }
   if (r.status === 404) throw new NotFoundError('Олдсонгүй');
   const j = await r.json().catch(() => ({}));
