@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useFavs } from '@/lib/store';
 import { useAuth } from './Auth';
@@ -8,7 +9,15 @@ export default function Header() {
   const path = usePathname();
   const q = useSearchParams();
   const favs = useFavs();
-  const { user, loading, logout } = useAuth();
+  const auth = useAuth();
+  // The header hydrates inside <Suspense>, possibly after the login check has finished.
+  // Render login-dependent parts only after this component mounted, so the first client
+  // render matches the server HTML (no hydration mismatch).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const user = mounted ? auth.user : null;
+  const loading = !mounted || auth.loading;
+  const { logout } = auth;
   const on = (key: string) => {
     if (key === 'sale' || key === 'rent') return path === '/search' && (q.get('deal') || 'sale') === key ? 'on' : '';
     return path === '/' + key ? 'on' : '';

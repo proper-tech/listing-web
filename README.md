@@ -3,7 +3,7 @@
 `real-estate-platform-plan.md`-ийн дагуу хийсэн ажиллах прототип: Phase 1 бүхэлдээ, Phase 2-оос 360° хэсэг.
 
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
-- **Backend:** тусдаа төсөл — [`listing-server`](../listing-server) (Node.js API, өгөгдөл PostgreSQL / Neon)
+- **Backend:** тусдаа төсөл — [`listing-server`](../listing-server) (Cloudflare Worker + Hono, өгөгдөл Neon Postgres, зураг R2)
 
 ## Ажиллуулах
 
@@ -42,7 +42,7 @@ npm start
 
 ## Vercel дээр байршуулах
 
-1. API серверийг байнгын дисктэй хостинг дээр байршуулна ([`listing-server`](../listing-server) README).
+1. API-г Cloudflare Workers дээр байршуулна ([`listing-server`](../listing-server) README).
 2. Vercel төслийн Environment Variables-д `API_URL=https://<api-хаяг>` нэмнэ (Production + Preview).
 3. Deploy хийнэ. `API_URL` нь build үед rewrite-д шингэдэг тул өөрчилсний дараа дахин deploy хийнэ.
 
