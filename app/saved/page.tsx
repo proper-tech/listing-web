@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { getListing } from '@/lib/mock/api';
 import { useFavs } from '@/lib/store';
 import type { Listing } from '@/lib/types';
 import { CATS } from '@/lib/constants';
@@ -21,7 +21,7 @@ export default function SavedPage() {
   const key = ids.join(',');
   useEffect(() => {
     let stale = false;
-    Promise.all(ids.map((id) => api<Listing>(`/api/listings/${id}?noview=1`).catch(() => null)))
+    Promise.all(ids.map((id) => getListing(id).catch(() => null)))
       .then((r) => { if (!stale) setItems(r.filter((x): x is Listing => !!x)); });
     return () => { stale = true; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps

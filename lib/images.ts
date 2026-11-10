@@ -1,4 +1,5 @@
 'use client';
+import { uploadImage } from './mock/api';
 
 export async function loadBitmap(file: Blob): Promise<ImageBitmap> {
   try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch { return await createImageBitmap(file); }
@@ -19,12 +20,8 @@ export async function resizeImage(file: Blob, maxW: number) {
   return out;
 }
 
-export async function upload(blob: Blob): Promise<string> {
-  const r = await fetch('/api/upload', { method: 'POST', headers: { 'content-type': blob.type || 'application/octet-stream' }, body: blob });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error((j as { error?: string }).error || 'Зураг илгээж чадсангүй');
-  return (j as { src: string }).src;
-}
+/** Mock upload: no server, the image is kept as a data: URL (see lib/mock/api.ts). */
+export const upload = uploadImage;
 
 // Load a classic <script> once (used for Pannellum, which has no ES module build).
 const scripts = new Map<string, Promise<void>>();

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { getPhone, reportListing } from '@/lib/mock/api';
 import { useToast } from './Toast';
 import FavButton from './FavButton';
 
@@ -8,7 +8,7 @@ export function PhoneAndFav({ id, title }: { id: string; title: string }) {
   const toast = useToast();
   const [phone, setPhone] = useState<string | null>(null);
   const reveal = async () => {
-    try { setPhone((await api<{ phone: string }>(`/api/listings/${id}/phone`)).phone); } catch (e) { toast((e as Error).message); }
+    try { setPhone(await getPhone(id)); } catch (e) { toast((e as Error).message); }
   };
   const share = async () => {
     const url = window.location.href;
@@ -37,7 +37,7 @@ export function ReportButton({ id }: { id: string }) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const send = async (reason: string) => {
-    try { await api(`/api/listings/${id}/report`, { method: 'POST', body: JSON.stringify({ reason }) }); setDone(true); setOpen(false); toast('Баярлалаа! Админ шалгана.'); }
+    try { await reportListing(id, reason); setDone(true); setOpen(false); toast('Баярлалаа! Админ шалгана.'); }
     catch (e) { toast((e as Error).message); }
   };
   if (done) return <p className="muted small" style={{ marginTop: 10 }}>Мэдээлэл илгээгдсэн.</p>;

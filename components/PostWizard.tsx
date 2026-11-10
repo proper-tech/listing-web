@@ -6,7 +6,8 @@ import {
   CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, ROOM_NAMES, type FieldKey,
 } from '@/lib/constants';
 import { fmtFull, fmtPrice } from '@/lib/format';
-import { api } from '@/lib/api';
+import { createListing } from '@/lib/mock/api';
+import { useAuth } from './Auth';
 import { canvasToBlob, resizeImage, upload } from '@/lib/images';
 import { getPannellum, type PannellumViewer } from '@/lib/pannellum';
 import { stitch } from '@/lib/stitch';
@@ -41,7 +42,12 @@ const uid = () => Math.random().toString(36).slice(2, 8);
 
 type SetDraft = React.Dispatch<React.SetStateAction<Draft>>;
 
-export default function PostWizard({ user }: { user: User }) {
+export default function PostWizard() {
+  const { user } = useAuth();
+  return user ? <Wizard user={user} /> : null;
+}
+
+function Wizard({ user }: { user: User }) {
   const toast = useToast();
   const [d, setD] = useState<Draft>(() => (draftCache?.userId === user.id ? draftCache.draft : newDraft(user)));
   const [step, setStep] = useState(0);
@@ -85,7 +91,7 @@ export default function PostWizard({ user }: { user: User }) {
       location: d.location, sellerName: d.sellerName, sellerPhone: d.sellerPhone, sellerType: d.sellerType, placement: d.placement,
     };
     try {
-      const res = await api<{ id: string; status: string }>('/api/listings', { method: 'POST', body: JSON.stringify(body) });
+      const res = await createListing(body);
       draftCache = null;
       setDone(res);
     } catch (e) { setError((e as Error).message); }
@@ -299,7 +305,7 @@ function StepTour({ d, setD, toast }: StepProps) {
     try {
       const files = await Promise.all(Array.from({ length: 12 }, async (_, i) => {
         const n = `IMG_${String(i + 1).padStart(2, '0')}.png`;
-        const b = await (await fetch(`/uploads/demo-capture/${n}`)).blob();
+        const b = await (await fetch(`/mock/demo-capture/${n}`)).blob();
         return new File([b], n, { type: 'image/png' });
       }));
       const room: DraftRoom = { id: uid(), name: name.trim() || 'Зочны өрөө (туршилт)', source: 'stitched', status: 'processing', hotspots: [], startYaw: 0, files, photoCount: 12, fov: 65 };

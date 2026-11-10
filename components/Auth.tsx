@@ -1,7 +1,7 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { getMe, logout as mockLogout } from '@/lib/mock/api';
 import type { User } from '@/lib/types';
 
 interface AuthState {
@@ -17,13 +17,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    api<{ user: User | null }>('/api/auth/me').then((r) => setUser(r.user)).catch(() => setUser(null)).finally(() => setLoading(false));
+    getMe().then(setUser).catch(() => setUser(null)).finally(() => setLoading(false));
   }, []);
   const logout = useCallback(async () => {
-    try { await api('/api/auth/logout', { method: 'POST' }); } catch { /* cookie is cleared anyway on next login */ }
+    try { await mockLogout(); } catch { /* session is local anyway */ }
     setUser(null);
     router.push('/');
-    router.refresh();
   }, [router]);
   return <AuthCtx.Provider value={{ user, loading, setUser, logout }}>{children}</AuthCtx.Provider>;
 }

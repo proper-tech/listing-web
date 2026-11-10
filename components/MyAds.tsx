@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { myListings, ownerAction } from '@/lib/mock/api';
 import type { Listing } from '@/lib/types';
 import { NOIMG, STATUS_MN } from '@/lib/constants';
 import { fmtDate } from '@/lib/format';
@@ -16,14 +16,14 @@ export default function MyAds() {
   const { user } = useAuth();
   const [items, setItems] = useState<Listing[] | null>(null);
   const load = useCallback(async () => {
-    try { setItems((await api<{ items: Listing[] }>('/api/mine')).items); } catch (e) { toast((e as Error).message); setItems([]); }
+    try { setItems(await myListings()); } catch (e) { toast((e as Error).message); setItems([]); }
   }, [toast]);
   useEffect(() => { load(); }, [load]);
 
   const act = async (l: Listing, action: keyof typeof MSG) => {
     if (action === 'delete' && !confirm('Зарыг бүр мөсөн устгах уу? Буцаах боломжгүй.')) return;
     try {
-      await api(`/api/listings/${l.id}/owner`, { method: 'POST', body: JSON.stringify({ action }) });
+      await ownerAction(l.id, action);
       toast(MSG[action]); load();
     } catch (e) { toast((e as Error).message); }
   };

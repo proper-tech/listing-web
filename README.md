@@ -3,48 +3,27 @@
 `real-estate-platform-plan.md`-ийн дагуу хийсэн ажиллах прототип: Phase 1 бүхэлдээ, Phase 2-оос 360° хэсэг.
 
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
-- **Backend:** тусдаа төсөл — [`listing-server`](../listing-server) (Cloudflare Worker + Hono, өгөгдөл Neon Postgres, зураг R2)
+- **Backend:** байхгүй — бүх өгөгдөл **mock** ([`lib/mock/`](lib/mock)). Ямар ч API сервер рүү хүсэлт явуулахгүй.
 
 ## Ажиллуулах
 
-Node.js 20+ хэрэгтэй. Анх удаа:
+Node.js 20+ хэрэгтэй.
 
 ```bash
 npm install
-```
-
-Эхлээд API серверийг тусад нь асаана (`../listing-server` дотор):
-
-```bash
 npm run dev
 ```
 
-Дараа нь энэ төсөлд:
+http://localhost:3000 нээнэ. Тусдаа сервер асаах шаардлагагүй.
 
-```bash
-npm run dev
-```
+## Mock өгөгдөл
 
-http://localhost:3000 нээнэ. Next.js `/api/*`, `/uploads/*` хүсэлтийг `API_URL` (default http://localhost:4000) руу дамжуулна ([next.config.ts](next.config.ts)).
-
-Production горим:
-
-```bash
-npm run build
-```
-
-```bash
-npm start
-```
-
-- Орчны хувьсагч: `API_URL` — API серверийн хаяг (default `http://localhost:4000`).
-- Жишээ өгөгдөл, өгөгдлийн сан (Neon), админ, орчны хувьсагчийг [`listing-server`](../listing-server) README-с үзнэ үү.
-
-## Vercel дээр байршуулах
-
-1. API-г Cloudflare Workers дээр байршуулна ([`listing-server`](../listing-server) README).
-2. Vercel төслийн Environment Variables-д `API_URL=https://<api-хаяг>` нэмнэ (Production + Preview).
-3. Deploy хийнэ. `API_URL` нь build үед rewrite-д шингэдэг тул өөрчилсний дараа дахин deploy хийнэ.
+- [`lib/mock/seed.ts`](lib/mock/seed.ts) — 17 жишээ зар, 2 хэрэглэгч, 1 гомдол. Зургууд [`public/mock/`](public/mock) дотор.
+- [`lib/mock/api.ts`](lib/mock/api.ts) — хайлт, зар нэмэх, нэвтрэх, админ гэх мэт бүх "API"-г хөтөч дотор гүйцэтгэнэ.
+  Өөрчлөлт (шинэ зар, агент, нууц үг...) хөтчийн IndexedDB-д хадгалагдана; тухайн хөтөч дээр л харагдана.
+- Оруулсан зураг data: URL болж зартайгаа хадгалагдана.
+- Анхны төлөвт буцаах: Админ самбар → "Mock өгөгдөл шинэчлэх" (эсвэл хөтчийн site data-г цэвэрлэх).
+- Зарын хуудасны SEO metadata нь зөвхөн жишээ заруудад ажиллана (шинэ зар хөтөч дотор л байдаг).
 
 ## Нэвтрэлт (зөвхөн админ, агент)
 
@@ -58,29 +37,27 @@ npm start
 | Админ | Бүх зар батлах/нуух/устгах; агент нэмэх (нэр, имэйл, утас, түр нууц үг), имэйл солих, идэвхгүй болгох, нууц үг шинэчлэх. Өөрийн зар шууд нийтлэгдэнэ |
 | Агент | Зар нэмэх (админ баталсны дараа нийтлэгдэнэ), өөрийн зарыг удирдах. Утасны дугаар нь зөвхөн зар дээрх холбоо барих дугаар |
 
-Анхны хэрэглэгчид (анх асаахад үүснэ):
-- Админ: `admin@example.com` / `admin` — **анх нэвтрэхэд заавал нууц үгээ солино**, түүнээс өмнө юу ч хийж чадахгүй.
-  Өөрийн имэйлээр үүсгэх бол `ADMIN_EMAIL=you@gmail.com`, `ADMIN_PASSWORD=...` орчны хувьсагч өгнө
-  (`ADMIN_EMAIL` нь дараа нь ч гэсэн үндсэн админы имэйлийг сольж чадна).
-- Жишээ агент (зөвхөн жишээ өгөгдөлд): `agent@example.com` / `agent1234` — жишээ агентлагийн 4 зарыг эзэмшинэ.
+Туршилтын эрх (нэвтрэх хуудсан дээр ч харагдана):
+- Админ: `admin@example.com` / `admin1234`
+- Агент: `agent@example.com` / `agent1234` — жишээ агентлагийн 4 зарыг эзэмшинэ.
 
-Аюулгүй байдал: нууц үг scrypt + salt-аар хэшлэгдэнэ; сесс нь HttpOnly, SameSite=Lax cookie (14 хоног),
-DB-д зөвхөн токены хэш хадгална; 15 минутад 10-аас олон буруу оролдлого хаагдана; админ тохируулсан
-нууц үгийг агент анх нэвтрэхдээ солино; нууц үг солих эсвэл идэвхгүй болгоход бусад нэвтрэлт гарна.
+Админы үүсгэсэн агент анх нэвтрэхдээ нууц үгээ заавал солино. Mock тул нууц үг шифрлэгдээгүй, хуудсууд хөтөч дээр хамгаалагдана.
 
 ## Бүтэц
 
 ```
 app/                  Next.js хуудсууд
-  page.tsx            Нүүр (server-rendered)
-  search/             Хайлт: эхний үр дүн сервер дээр, шүүлтүүр хөтөч дээр
-  listing/[id]/       Зарын хуудас (server-rendered, SEO/og:image metadata)
+  page.tsx            Нүүр
+  search/             Хайлт, шүүлтүүр
+  listing/[id]/       Зарын хуудас
   post/               Зар нэмэх 7 алхам (нэвтрэх шаардлагатай)
   login/ account/     Нэвтрэх, нууц үг солих
   saved/ my/ admin/   Хадгалсан + харьцуулах, Миний зар, Админ (+ агент удирдах)
   help/ pricing/      Статик хуудас
 components/           React компонентууд (TourViewer, Maps, PostWizard, ...)
-lib/                  Төрлүүд, тогтмолууд, API, localStorage, 360° холбогч (stitch.js)
+lib/                  Төрлүүд, тогтмолууд, localStorage, 360° холбогч (stitch.js)
+  mock/               Mock өгөгдөл + mock API (IndexedDB)
+public/mock/          Жишээ зураг, 360° панорама
 ```
 
 - **360° viewer:** Pannellum (CDN-ээс), **газрын зураг:** Leaflet + OpenStreetMap

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SearchResult } from '@/lib/types';
 import { CATS, CAT_KEYS, DISTRICTS } from '@/lib/constants';
-import { api } from '@/lib/api';
+import { searchListings } from '@/lib/mock/api';
 import { store } from '@/lib/store';
 import { Grid } from './ListingCard';
 import { ResultsMap } from './Maps';
@@ -13,26 +13,24 @@ const RANGES: [string, string, string][] = [
 ];
 const SORTS: [string, string][] = [['new', 'Шинэ эхэндээ'], ['cheap', 'Хямд эхэндээ'], ['expensive', 'Үнэтэй эхэндээ'], ['ppm2', 'м² үнэ (бага)'], ['area', 'Талбай (их)']];
 
-export default function SearchClient({ initialQuery, initial }: { initialQuery: string; initial: SearchResult }) {
+export default function SearchClient({ initialQuery }: { initialQuery: string }) {
   const [q, setQ] = useState(() => new URLSearchParams(initialQuery));
-  const [res, setRes] = useState(initial);
+  const [result, setRes] = useState<SearchResult | null>(null);
+  const res = result ?? { total: 0, page: 1, per: 24, items: [] };
   const [view, setView] = useState<'list' | 'map'>('list');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [formKey, setFormKey] = useState(0); // remounts the form after "reset"
-  const first = useRef(true);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => { setView(store.get<'list' | 'map'>('view', 'list')); }, []);
 
-  // Fetch whenever the query or view changes (the first render uses server data).
+  // Fetch whenever the query or view changes.
   useEffect(() => {
     const apiQ = new URLSearchParams(q);
     if (view === 'map') { apiQ.set('per', '60'); apiQ.delete('page'); }
     window.history.replaceState(null, '', '/search' + (q.toString() ? '?' + q : ''));
-    if (first.current && view === 'list') { first.current = false; return; }
-    first.current = false;
     let stale = false;
-    api<SearchResult>('/api/listings?' + apiQ).then((r) => { if (!stale) setRes(r); }).catch(() => {});
+    searchListings(apiQ).then((r) => { if (!stale) setRes(r); }).catch(() => {});
     return () => { stale = true; };
   }, [q, view]);
 
@@ -117,7 +115,7 @@ export default function SearchClient({ initialQuery, initial }: { initialQuery: 
       <section>
         <div className="results-bar">
           <button className="btn filters-toggle" onClick={() => setFiltersOpen((o) => !o)}>☰ Шүүлтүүр</button>
-          <b className="grow">{res.total} зар</b>
+          <b className="grow">{result ? `${res.total} зар` : 'Хайж байна…'}</b>
           <select value={q.get('sort') || 'new'} aria-label="Эрэмбэ" onChange={(e) => setParam('sort', e.target.value === 'new' ? '' : e.target.value)}>
             {SORTS.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
           </select>
@@ -126,7 +124,7 @@ export default function SearchClient({ initialQuery, initial }: { initialQuery: 
             <button className={view === 'map' ? 'on' : ''} onClick={() => changeView('map')}>Газрын зураг</button>
           </div>
         </div>
-        {view === 'list' ? (
+        {!result ? <div className="loading">Ачаалж байна…</div> : view === 'list' ? (
           <>
             <Grid items={res.items} empty="Таны шүүлтүүрт тохирох зар олдсонгүй. Шүүлтүүрээ багасгаад үзээрэй." />
             {pages > 1 && (

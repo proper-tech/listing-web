@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
-import type { User } from '@/lib/types';
+import { changePassword } from '@/lib/mock/api';
 import { useAuth } from './Auth';
 import { useToast } from './Toast';
 
@@ -22,11 +21,11 @@ export default function ChangePassword({ next, forced }: { next: string; forced:
     if (nextPw !== f.get('confirm')) return setError('Шинэ нууц үг таарахгүй байна.');
     setBusy(true); setError('');
     try {
-      const { user } = await api<{ user: User }>('/api/auth/password', { method: 'POST', body: JSON.stringify({ current: f.get('current'), next: nextPw }) });
+      const user = await changePassword(String(f.get('current') || ''), nextPw);
       setUser(user);
       toast('Нууц үг солигдлоо');
       form.reset();
-      if (forced) { router.replace(next); router.refresh(); }
+      if (forced) router.replace(next);
     } catch (err) { setError((err as Error).message); }
     setBusy(false);
   }

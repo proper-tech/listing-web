@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import MyAds from '@/components/MyAds';
-import { requirePageUser } from '@/lib/session';
+import RequireUser from '@/components/RequireUser';
 
 export const metadata: Metadata = { title: 'Миний зар' };
 
-export default async function MyPage() {
-  await requirePageUser(['agent', 'admin'], '/my');
-  return <MyAds />;
+export default function MyPage() {
+  return <RequireUser roles={['agent', 'admin']} path="/my"><MyAds /></RequireUser>;
 }
