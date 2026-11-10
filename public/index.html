@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ProperTech — Үл хөдлөх хөрөнгийн зар, 360° аялал</title>
+  <meta name="description" content="Орон сууц, хашаа байшин, газар, оффис зарна, түрээслүүлнэ. Байраа 360° аялалаар үзээрэй.">
+  <!-- Golos Text for all text (headings + body), see --font in styles.css; Onest for the search sidebar only -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Onest:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a href="#/" class="logo" aria-label="ProperTech">
+        <!-- ProperTech mark (copied from propertech-site/app/parts.tsx): stem = the building's core,
+             bowl = a facade with two window openings cut out (evenodd), so the floors read as the P's counter -->
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="5" y="3" width="6.5" height="26" fill="currentColor"/>
+          <path fill="var(--brand)" fill-rule="evenodd" d="M11 3h16v16H11z M14.2 6.2h9.6v3.6h-9.6z M14.2 12.2h9.6v3.6h-9.6z"/>
+        </svg>
+        <span>Proper<i>Tech</i></span>
+      </a>
+      <nav class="nav" id="nav">
+        <!-- Dropdowns: hover opens on desktop, the caret opens on tap/keyboard. Menus are filled from CATS in app.js -->
+        <div class="dd" data-nav="sale">
+          <a href="#/search?deal=sale">Зарах</a><button type="button" class="caret" aria-expanded="false" aria-label="Зарах: төрөл сонгох">▾</button>
+          <div class="menu" data-deal="sale"></div>
+        </div>
+        <div class="dd" data-nav="rent">
+          <a href="#/search?deal=rent">Түрээслэх</a><button type="button" class="caret" aria-expanded="false" aria-label="Түрээслэх: төрөл сонгох">▾</button>
+          <div class="menu" data-deal="rent"></div>
+        </div>
+        <a href="#/saved" data-nav="saved">Хадгалсан <span class="count" id="favCount"></span></a>
+        <a href="#/my" data-nav="my">Миний зар</a>
+      </nav>
+      <a href="#/post" class="btn btn-primary post-btn">+ Зар нэмэх</a>
+    </div>
+  </header>
+  <main id="app" class="wrap"><div class="loading">Ачаалж байна…</div></main>
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div><b>ProperTech</b> — үл хөдлөх хөрөнгийн зар, 360° аялалтай. Прототип.</div>
+      <div class="footer-links">
+        <a href="#/help">Тусламж ба 360° зураг авах заавар</a>
+        <a href="#/pricing">Үнэ</a>
+        <a href="#/admin">Админ</a>
+      </div>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
+  <script src="/stitch.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

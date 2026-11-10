@@ -1,0 +1,8 @@
+# generated on first start by seed.js (see README); user uploads and the demo database live here
+data/
+public/uploads/
+# one-off local backup of the pre-restyle files; git history replaces it
+.backup-before-propertech-ui/
+.DS_Store
+# old hero clip kept locally as an alternative (app.js comment); not needed by the app
+public/video/hero-construction.mp4
