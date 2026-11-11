@@ -1,7 +1,7 @@
 // Mock backend: бүх өгөгдөл хөтөч дотор (IndexedDB) хадгалагдана, ямар ч сервер рүү хүсэлт явуулахгүй.
 // Анх ачаалахад seed.ts-ийн жишээ өгөгдлөөр дүүргэнэ. resetMockData() нь анхны төлөвт буцаана.
 import type {
-  AdminListing, AdminUser, Category, Img, Listing, ListingStatus, Placement, Report, SearchResult, SellerType, Stats, Tour, User,
+  AdminListing, AdminUser, Category, Img, InquiryWithListing, Listing, ListingStatus, Placement, Report, SearchResult, SellerType, Stats, Tour, User,
 } from '../types';
 import { CAT_KEYS, DISTRICTS, PAY_TERMS } from '../constants';
 import { DB_VERSION, seedDB, type MockDB, type StoredListing, type StoredUser } from './seed';
@@ -340,7 +340,53 @@ export async function myListings(): Promise<Listing[]> {
 const removeListing = (db: MockDB, id: string) => {
   db.listings = db.listings.filter((l) => l.id !== id);
   db.reports = db.reports.filter((r) => r.listingId !== id);
+  db.inquiries = (db.inquiries ?? []).filter((q) => q.listingId !== id);
 };
+
+/* ---------- inquiries (зарын талаар холбогдох) ---------- */
+/** Утасны дугаарыг 8 оронтой болгоно: +976, зай, зураас зэргийг хасна. Буруу бол ''. */
+export function normPhone(v: unknown): string {
+  let d = typeof v === 'string' ? v.replace(/\D/g, '') : '';
+  if (d.length === 11 && d.startsWith('976')) d = d.slice(3);
+  return /^[5-9]\d{7}$/.test(d) ? d : '';
+}
+
+export async function sendInquiry(id: string, b: { name: unknown; phone: unknown; email?: unknown; message: unknown }): Promise<void> {
+  const name = cleanStr(b.name, 60);
+  const phone = normPhone(b.phone);
+  const email = normEmail(b.email);
+  const message = cleanStr(b.message, 1000);
+  if (name.length < 2) fail('Нэрээ оруулна уу.');
+  if (!phone) fail('Утасны дугаар 8 оронтой байна.');
+  if (email && !validEmail(email)) fail('Имэйл хаяг буруу байна.');
+  if (message.length < 5) fail('Мессежээ бичнэ үү.');
+  await write((db) => {
+    const l = findListing(db, id);
+    if (!l || !isLive(l)) notFound();
+    db.inquiries ??= [];
+    db.inquiries.unshift({ id: randomId(), listingId: l!.id, name, phone, email: email || undefined, message, createdAt: new Date().toISOString(), read: false });
+    db.inquiries = db.inquiries.slice(0, 2000);
+  });
+}
+
+/** Нэвтэрсэн хэрэглэгчийн зарууд руу ирсэн хүсэлтүүд (админ бүгдийг харна). */
+export async function myInquiries(): Promise<InquiryWithListing[]> {
+  return read((db) => {
+    const u = requireUser(db);
+    const mine = new Map(db.listings.filter((l) => u.role === 'admin' || l.ownerId === u.id).map((l) => [l.id, l.title]));
+    return (db.inquiries ?? []).filter((q) => mine.has(q.listingId)).map((q) => ({ ...q, listingTitle: mine.get(q.listingId)! }));
+  });
+}
+
+export async function markInquiryRead(id: string): Promise<void> {
+  await write((db) => {
+    const u = requireUser(db);
+    const q = (db.inquiries ?? []).find((x) => x.id === id);
+    const l = q && findListing(db, q.listingId);
+    if (!q || !l || (u.role !== 'admin' && l.ownerId !== u.id)) fail('Олдсонгүй');
+    q!.read = true;
+  });
+}
 
 export async function ownerAction(id: string, action: 'bump' | 'renew' | 'sold' | 'delete'): Promise<void> {
   await write((db) => {

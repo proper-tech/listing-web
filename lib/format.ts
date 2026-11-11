@@ -26,7 +26,7 @@ export function fmtDate(iso: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Давхарыг харуулах: сөрөг утга нь подвал (B1, B2 ...). */
+/** Давхрыг харуулах: сөрөг утга нь подвал (B1, B2 ...). */
 export const fmtFloor = (n: number) => (n < 0 ? `B${-n}` : String(n));
 
 export function specLine(l: Pick<Listing, 'rooms' | 'area' | 'floor' | 'buildingFloors'>): string {

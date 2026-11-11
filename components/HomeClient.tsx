@@ -49,7 +49,7 @@ export default function HomeClient() {
       <section className="hero">
         <HeroVideo src="/video/ulaanbaatar-hero.mp4" />
         <div className="glass">
-          <h1>Байраа ирэхээсээ өмнө <em className="nowrap">360°-аар</em> үзээрэй</h1>
+          <h1>Байранд очихоосоо өмнө <em className="nowrap">360°-аар</em> үзээрэй</h1>
           <p>Орон сууц, хашаа байшин, газар, оффис — зарна, түрээслүүлнэ.</p>
           <HeroSearch />
         </div>

@@ -12,7 +12,7 @@ import { PANNELLUM_CSS } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: { default: 'ProperTech — Үл хөдлөх хөрөнгийн зар, 360° аялал', template: '%s — ProperTech' },
-  description: 'Орон сууц, хашаа байшин, газар, оффис зарна, түрээслүүлнэ. Байраа 360° аялалаар үзээрэй.',
+  description: 'Орон сууц, хашаа байшин, газар, оффис зарна, түрээслүүлнэ. Байраа 360° аяллаар үзээрэй.',
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#c39a3e' };
 

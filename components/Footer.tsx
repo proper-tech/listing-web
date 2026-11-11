@@ -26,7 +26,7 @@ export default function Footer() {
       {/* CTA */}
       <section className="sf-cta">
         <div className="wrap">
-          <span className="sf-kicker">Эхлэцгээе</span>
+          <span className="sf-kicker">Эхэлцгээе</span>
           <h2>Хайж буй байраа <em>360°-аар</em> олоход бэлэн үү?</h2>
           <p>Худалдан авах, түрээслэх эсвэл зараа байршуулах — бүгдийг нэг дороос. Байрыг очиж үзэхээсээ өмнө өрөө бүрээр нь аялаарай.</p>
           <div className="sf-actions">

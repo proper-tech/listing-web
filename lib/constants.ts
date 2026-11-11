@@ -28,7 +28,7 @@ export const FIELD_DEFS: Record<FieldKey, { label: string; type: 'number' | 'sel
   area: { label: 'Талбай (м²)', type: 'number', req: true },
   floor: { label: 'Хэдэн давхарт', type: 'number' },
   buildingFloors: { label: 'Барилгын давхар', type: 'number' },
-  yearInUse: { label: 'Ашиглалтанд орсон он', type: 'number' },
+  yearInUse: { label: 'Ашиглалтад орсон он', type: 'number' },
   floorMaterial: { label: 'Шал', type: 'select', options: ['Паркет', 'Ламинат', 'Плита', 'Модон', 'Бусад'] },
   balconies: { label: 'Тагт', type: 'number' },
   windowType: { label: 'Цонх', type: 'select', options: ['Вакуум', 'Төмөр вакуум', 'Мод', 'Бусад'] },

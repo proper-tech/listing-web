@@ -274,7 +274,7 @@ function detailIssues(d: Draft): { errors: Issues; warnings: Issues } {
     if (ppm < lo || ppm > hi)
       warnings.price = `м² тутамд ${fmtFull(ppm)} гарч байна — ${ppm < lo ? 'хэт бага' : 'хэт өндөр'}. Үнэ, талбайгаа зөв оруулсан эсэхээ шалгана уу.`;
   }
-  if (!errors.area && d.category === 'apartment' && area > 1000) warnings.area = 'Орон сууцад их талбай байна. Зөв эсэхийг шалгана уу.';
+  if (!errors.area && d.category === 'apartment' && area > 1000) warnings.area = 'Орон сууцанд их талбай байна. Зөв эсэхийг шалгана уу.';
   return { errors, warnings };
 }
 
@@ -533,9 +533,9 @@ function StepTour({ d, setD, toast }: StepProps) {
             </div>
             <label className="dropzone">
               <input type="file" accept="image/*" multiple onChange={(e) => { addModeB([...(e.target.files || [])]); e.target.value = ''; }} />
-              <div style={{ fontSize: 24 }}>🧩</div><b>Давхцсан зургуудаа сонгох</b><div className="muted small">Авсан дарааллаар нь (файлын нэрээр эрэмбэлнэ)</div>
+              <div style={{ fontSize: 24 }}>🧩</div><b>Давхацсан зургуудаа сонгох</b><div className="muted small">Авсан дарааллаар нь (файлын нэрээр эрэмбэлнэ)</div>
             </label>
-            <p className="small"><a href="#" onClick={demoCapture}>Туршилтын 12 зургаар турших</a> <span className="muted">— сайт өөрөө зурсан өрөөний 12 давхцсан зураг</span></p>
+            <p className="small"><a href="#" onClick={demoCapture}>Туршилтын 12 зургаар турших</a> <span className="muted">— сайт өөрөө зурсан өрөөний 12 давхацсан зураг</span></p>
           </>
         )}
       </div>
@@ -657,7 +657,7 @@ function StepContact({ d, setD, user }: StepProps) {
             <label className="field"><span>Зар оруулагч</span>
               <select value={d.sellerType} onChange={(e) => set('sellerType', e.target.value as SellerType)}><option value="agent">Агент</option><option value="owner">Эзэмшигч</option></select></label>
           ) : <p className="muted small">Зар &quot;Агент&quot; гэж харагдана. Нэр, утсыг таны бүртгэлээс бөглөсөн; энэ зарт зориулж өөрчилж болно.</p>}
-          <p className="muted small">Утасны дугаар зар дээр шууд харагдахгүй — &quot;Утасны дугаар харах&quot; товч дарсан хүнд л харагдана.</p>
+          <p className="muted small">Утасны дугаар зар дээр шууд харагдана.</p>
         </div>
         <div><div className="muted small" style={{ marginBottom: 6 }}>Карт ингэж харагдана:</div><div style={{ maxWidth: 300 }}><ListingCard l={preview} preview /></div></div>
       </div>

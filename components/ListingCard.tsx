@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Listing } from '@/lib/types';
 import { CATS, NOIMG, STATUS_MN } from '@/lib/constants';
-import { fmtPrice, specLine } from '@/lib/format';
+import { fmtFloor, fmtPrice } from '@/lib/format';
 import FavButton from './FavButton';
 
 type CardListing = Pick<Listing, 'id' | 'title' | 'price' | 'dealType' | 'category' | 'rooms' | 'area' | 'floor' | 'buildingFloors' | 'photos' | 'location' | 'createdAt' | 'hasTour' | 'promo'>
@@ -27,20 +27,42 @@ export function coverImage(l: Pick<Listing, 'photos'> & Partial<Pick<Listing, 't
   return l.photos[0]?.src || l.tour?.rooms.find((r) => r.panorama)?.panorama?.src || NOIMG;
 }
 
+/** Картын доорх үзүүлэлтүүд: "2 ӨРӨӨ | 73 М² | 5/12 ДАВХАР". */
+function specParts(l: CardListing): string[] {
+  const p: string[] = [];
+  if (l.rooms) p.push(`${l.rooms} өрөө`);
+  if (l.area) p.push(`${l.area} м²`);
+  if (l.floor && l.buildingFloors) p.push(`${fmtFloor(l.floor)}/${l.buildingFloors} давхар`);
+  else if (l.floor) p.push(`${fmtFloor(l.floor)} давхар`);
+  return p;
+}
+
 export default function ListingCard({ l, preview = false }: { l: CardListing; preview?: boolean }) {
+  const specs = specParts(l);
   const body = (
     <>
       <div className="card-img">
         <img loading="lazy" src={coverImage(l)} alt="" />
         <div className="badges"><Badges l={l} /></div>
+        {!preview && <div className="card-fav"><FavButton id={l.id} /></div>}
+        <div className="card-tags">
+          <span className={`tag-deal ${l.dealType}`}>{l.dealType === 'rent' ? 'Түрээс' : 'Зарна'}</span>
+          <span className="tag-cat">{CATS[l.category].name}</span>
+        </div>
       </div>
       <div className="card-body">
-        <div className="card-top">
-          <div className="price"><Price l={l} /></div>
-          {!preview && <FavButton id={l.id} />}
+        <div className="card-loc">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+          <span>{[l.location.district, l.location.city || 'Улаанбаатар'].filter(Boolean).join(', ')}</span>
         </div>
         <div className="title" title={l.title}>{l.title}</div>
-        <div className="meta">{specLine(l) || CATS[l.category].name} · {l.location.district}</div>
+        <div className="card-specs">
+          {specs.length ? specs.map((s) => <span key={s}>{s}</span>) : <span>{CATS[l.category].name}</span>}
+        </div>
+        <div className="card-foot">
+          <div className="price"><Price l={l} /></div>
+          {!preview && <span className="card-more">Дэлгэрэнгүй<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>}
+        </div>
       </div>
     </>
   );

@@ -8,6 +8,7 @@ import { fmtDate } from '@/lib/format';
 import { Price } from './ListingCard';
 import { useToast } from './Toast';
 import { useAuth } from './Auth';
+import InquiryInbox from './InquiryInbox';
 
 const MSG = { bump: 'Зар дээшиллээ (демо: төлбөргүй)', renew: '30 хоногоор сунгалаа', sold: 'Зарагдсан гэж тэмдэглэлээ', delete: 'Устгалаа' } as const;
 
@@ -52,6 +53,7 @@ export default function MyAds() {
           ))}
         </tbody></table></div>
       )}
+      <InquiryInbox />
     </>
   );
 }

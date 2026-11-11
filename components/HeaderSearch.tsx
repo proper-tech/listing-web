@@ -129,7 +129,7 @@ export default function HeaderSearch() {
                 {check('notLast', 'Сүүлийн давхар биш')}
               </div>
               <div><h3>Барилгын давхар</h3>{pair('bfMin', 'bfMax', undefined, 3)}</div>
-              <div><h3>Ашиглалтанд орсон он</h3>{pair('yearMin', 'yearMax', undefined, 4, ['Оноос', 'Хүртэл'])}</div>
+              <div><h3>Ашиглалтад орсон он</h3>{pair('yearMin', 'yearMax', undefined, 4, ['Оноос', 'Хүртэл'])}</div>
               <div>
                 <h3>Нэмэлт</h3>
                 {check('tour', '360° аялалтай')}

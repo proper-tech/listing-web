@@ -8,7 +8,7 @@ import { store } from '@/lib/store';
 import { Grid } from './ListingCard';
 import { ResultsMap } from './Maps';
 
-// Давхарын сонголт: подвал B3–B1, дараа нь 1–40 (сөрөг тоо дотооддоо подвалыг илэрхийлнэ).
+// Давхрын сонголт: подвал B3–B1, дараа нь 1–40 (сөрөг тоо дотооддоо подвалыг илэрхийлнэ).
 const FLOORS = [-3, -2, -1, ...Array.from({ length: 40 }, (_, i) => i + 1)];
 const SORTS: [string, string][] = [['new', 'Шинэ эхэндээ'], ['cheap', 'Хямд эхэндээ'], ['expensive', 'Үнэтэй эхэндээ'], ['ppm2', 'м² үнэ (бага)'], ['area', 'Талбай (их)']];
 // "Нарийвчилсан" хэсэгт хамаарах параметрүүд (идэвхтэй тоог товчин дээр харуулна)
@@ -191,7 +191,7 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
             </div>
             <div className="ff"><span className="ff-label">Барилгын давхар</span>{pair('bfMin', 'bfMax', undefined, 3)}</div>
 
-            <div className="ff"><span className="ff-label">Ашиглалтанд орсон он</span>{pair('yearMin', 'yearMax', undefined, 4, ['Оноос', 'Хүртэл'])}</div>
+            <div className="ff"><span className="ff-label">Ашиглалтад орсон он</span>{pair('yearMin', 'yearMax', undefined, 4, ['Оноос', 'Хүртэл'])}</div>
             <div className="ff ff-checks">
               <span className="ff-label">Нэмэлт</span>
               <div className="fchecks">

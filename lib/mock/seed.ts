@@ -1,6 +1,6 @@
 // Mock өгөгдөл: жишээ зарууд, хэрэглэгчид. Зураг нь public/mock/ дотор.
 import { CENTERS } from '../constants';
-import type { Category, DealType, Img, Listing, ListingStatus, Placement, Report, Role, SellerType, Tour } from '../types';
+import type { Category, DealType, Img, Listing, ListingStatus, Placement, Inquiry, Report, Role, SellerType, Tour } from '../types';
 
 /** Listing as kept in the mock DB (owner fields are never sent to pages as-is). */
 export type StoredListing = Omit<Listing, 'hasTour' | 'promo'> & { ownerId?: string; ownerPhone: string };
@@ -14,6 +14,7 @@ export interface MockDB {
   listings: StoredListing[];
   users: StoredUser[];
   reports: Report[];
+  inquiries?: Inquiry[]; // нэмэлт: хуучин хадгалсан өгөгдөлд байхгүй байж болно
   sessionUserId: string | null;
 }
 
@@ -114,6 +115,7 @@ export function seedDB(): MockDB {
     reports: [
       { id: 'rp-demo-1', listingId: 'L100003', reason: 'wrong_price', createdAt: new Date(t - 4 * H).toISOString() },
     ],
+    inquiries: [],
     sessionUserId: null,
   };
 }

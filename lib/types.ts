@@ -72,6 +72,9 @@ export interface AdminUser extends User { listings: number }
 
 export interface AdminListing extends Listing { ownerPhone: string; ownerName: string | null; reports: number }
 export interface Report { id: string; listingId: string; reason: string; note?: string; createdAt: string }
+/** Зарын талаарх холбоо барих хүсэлт (худалдан авагчаас зар оруулагч руу). */
+export interface Inquiry { id: string; listingId: string; name: string; phone: string; email?: string; message: string; createdAt: string; read?: boolean }
+export interface InquiryWithListing extends Inquiry { listingTitle: string }
 
 export interface SearchResult { total: number; page: number; per: number; items: Listing[] }
 export interface Stats { counts: Record<string, number>; total: number }
