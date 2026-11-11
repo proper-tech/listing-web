@@ -39,7 +39,7 @@ export default function ListingCard({ l, preview = false }: { l: CardListing; pr
           <div className="price"><Price l={l} /></div>
           {!preview && <FavButton id={l.id} />}
         </div>
-        <div className="title">{l.title}</div>
+        <div className="title" title={l.title}>{l.title}</div>
         <div className="meta">{specLine(l) || CATS[l.category].name} · {l.location.district}</div>
       </div>
     </>

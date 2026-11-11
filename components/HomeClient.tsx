@@ -56,16 +56,17 @@ export default function HomeClient() {
         <a href="#browse" className="scroll-cue" aria-label="Доош гүйлгэх"><span /></a>
       </section>
       <section className="home-cats">
-        <div className="hc-head">
+        <div className="section-head hc-head">
           <div>
+            <span className="kicker">Ангилал</span>
             <h2>Үл хөдлөх хөрөнгө</h2>
-            <p className="muted">Төрлөө сонгоод хайлтаа эхлүүлээрэй</p>
+            <p className="section-sub">Төрлөө сонгоод хайлтаа эхлүүлээрэй</p>
           </div>
           <div className="ftabs" role="tablist" aria-label="Гүйлгээний төрөл">
             {(['sale', 'rent'] as const).map((d) => (
               <button key={d} type="button" role="tab" aria-selected={deal === d} className={`ftab ${deal === d ? 'on' : ''}`} onClick={() => setDeal(d)}>
                 <span>{d === 'sale' ? 'Зарна' : 'Түрээс'}</span>
-                <b className="fcount">{data ? dealTotal(d) : '·'}</b>
+                <span className="fcount">{data ? dealTotal(d) : '·'}</span>
               </button>
             ))}
           </div>
