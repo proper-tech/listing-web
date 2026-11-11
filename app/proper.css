@@ -251,14 +251,16 @@ label.field > span { display: block; font-size: 13px; color: var(--muted); margi
 .badge { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; background: #0d0d0cb3; color: #fff; }
 .badge.top { background: var(--top); } .badge.vip { background: var(--vip); color: var(--on-brand); } .badge.b360 { background: var(--brand); color: var(--on-brand); }
 .badge.ai { background: #7048e8; } .badge.pending { background: #868e96; } .badge.sold { background: #495057; } .badge.expired { background: #adb5bd; color: #222; } .badge.rejected { background: var(--danger); }
-.card-body { padding: 12px 2px 0; display: flex; flex-direction: column; gap: 4px; }
+.card-body { padding: 12px 2px 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.grid > .card { min-width: 0; } /* let grid items shrink so the "…" truncation can kick in */
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .price { font-size: 19px; font-weight: 700; color: var(--brand-text); letter-spacing: -.01em; }
 .card .price { color: var(--text); font-size: 20px; }
 .price small { font-size: 13px; font-weight: 500; color: var(--muted); }
-.card .title { font-weight: 400; font-size: 15px; line-height: 1.4; color: var(--text); white-space: normal; text-overflow: clip; /* globals.css: nowrap */
-               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.card .meta { margin-top: 2px; }
+/* title and meta: one line each, "…" when too long (full title in the title attribute) */
+.card .title { font-weight: 400; font-size: 15px; line-height: 1.4; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.card .meta { margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.card .price { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* heart: plain outline next to the price, no circle */
 .fav { position: static; flex: none; width: 34px; height: 34px; margin: -4px -6px -4px 0; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
        background: transparent; color: var(--text); cursor: pointer; transition: color .2s, transform .2s, background .2s; }
@@ -521,6 +523,13 @@ html::-webkit-scrollbar-corner, .filters::-webkit-scrollbar-corner { background:
 .topbar .post-btn:not(.btn-primary) { background: #fffdf7; border: 1px solid #1f1b1424; box-shadow: 0 1px 2px #3a2c1814; }
 .topbar .post-btn:not(.btn-primary):hover { border-color: var(--brand); color: var(--brand-text); background: #fff; }
 .topbar .post-btn svg { width: 16px; height: 16px; margin-right: 2px; }
+.topbar .post-btn { white-space: nowrap; }
+/* phones: "Агентаар нэвтрэх" → "Нэвтрэх" so the header doesn't crowd */
+@media (max-width: 520px) {
+  .login-who { display: none; }
+  .topbar .post-btn > span { display: inline-block; } /* ::first-letter needs a block container */
+  .topbar .post-btn > span::first-letter { text-transform: uppercase; }
+}
 .topbar .btn-primary.post-btn { box-shadow: 0 6px 16px -8px #b48a45cc; }
 .topbar .user-name { padding-left: 10px; border-left: 1px solid var(--line); }
 .topbar .user-box .btn-sm { border-radius: 999px; height: 32px; padding: 0 12px; }
@@ -620,21 +629,27 @@ html::-webkit-scrollbar-corner, .filters::-webkit-scrollbar-corner { background:
 
 /* ================= Нүүр: ангиллын хэсэг ================= */
 .home-cats { --fb: #1f1b1424; margin: 34px 0 10px; }
-.hc-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-.hc-head h2 { margin: 0 0 4px; }
-.hc-head p { margin: 0; font-size: 14px; }
-.home-cats .ftab { height: 42px; }
+/* heading reuses .section-head/.kicker/.section-sub so it matches the other home sections */
+/* tabs here: sentence case, no tracking; count in regular-weight tabular digits */
+.home-cats .ftab { height: 42px; font-size: 14px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.home-cats .ftab.on { font-weight: 600; }
+.home-cats .fcount { font-weight: 500; font-variant-numeric: tabular-nums; }
 .hc-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.hc-card { display: flex; align-items: center; gap: 14px; min-height: 76px; padding: 14px 16px; border: 1px solid var(--fb); border-radius: 14px;
+.hc-card { position: relative; display: flex; align-items: center; gap: 12px; min-height: 92px; padding: 12px 14px; border: 1px solid var(--fb); border-radius: 14px;
   background: var(--surface); color: var(--text); text-decoration: none !important; transition: border-color .2s, box-shadow .2s, transform .2s; }
 .hc-card:hover { border-color: var(--brand); box-shadow: 0 14px 28px -18px #3a2c1880; transform: translateY(-2px); }
-.hc-ico { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 12px; background: #b48a451c; color: var(--brand-text); transition: background .2s, color .2s; }
+.hc-ico { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 12px; background: #b48a451c; color: var(--brand-text); transition: background .2s, color .2s, transform .25s; }
 .hc-ico svg { width: 22px; height: 22px; }
 .hc-card:hover .hc-ico { background: var(--brand); color: var(--on-brand); }
-.hc-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.hc-body b { font-size: 15px; font-weight: 600; line-height: 1.3; }
-.hc-body small { color: var(--muted); font-size: 13px; }
-.hc-arrow { color: var(--muted); opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s, color .2s; }
+/* clay illustrations: bigger, no tinted box behind them */
+.hc-ico.has-art { width: 64px; height: 64px; border-radius: 0; background: none; }
+.hc-ico.has-art img { width: 100%; height: 100%; object-fit: contain; }
+.hc-card:hover .hc-ico.has-art { background: none; transform: scale(1.06); }
+.hc-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; padding-right: 10px; }
+.hc-body b { font-size: 15.5px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; text-wrap: balance; }
+.hc-body small { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+/* arrow sits in the corner so it doesn't take width from the title */
+.hc-arrow { position: absolute; top: 10px; right: 12px; font-size: 14px; color: var(--muted); opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s, color .2s; }
 .hc-card:hover .hc-arrow { opacity: 1; transform: none; color: var(--brand-text); }
 .hc-card.is-empty { opacity: .62; }
 .hc-card.is-empty:hover { opacity: 1; }

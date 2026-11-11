@@ -68,7 +68,7 @@ export default function Header() {
         ) : (
           <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></svg>
-            Нэвтрэх
+            <span><span className="login-who">Агентаар </span>нэвтрэх</span>
           </Link>
         ))}
         </div>
