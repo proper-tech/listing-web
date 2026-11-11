@@ -229,7 +229,7 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
 
       {!result ? <div className="loading">Ачаалж байна…</div> : view === 'list' ? (
         <>
-          <Grid items={res.items} empty="Таны шүүлтүүрт тохирох зар олдсонгүй. Шүүлтүүрээ багасгаад үзээрэй." />
+          <Grid items={res.items} empty="Тохирох зар олдсонгүй. " />
           {pages > 1 && (
             <div className="pager">
               {Array.from({ length: pages }, (_, i) => (

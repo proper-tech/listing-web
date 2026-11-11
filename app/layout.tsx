@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { Golos_Text } from 'next/font/google';
-import Link from 'next/link';
 import { Suspense } from 'react';
 import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import './proper.css';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { ToastProvider } from '@/components/Toast';
 import { AuthProvider } from '@/components/Auth';
 import { PANNELLUM_CSS } from '@/lib/constants';
@@ -32,16 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Header />
           </Suspense>
           <main className="wrap">{children}</main>
-          <footer className="footer">
-            <div className="wrap footer-inner">
-              <div><b>ProperTech</b> — үл хөдлөх хөрөнгийн зар, 360° аялалтай. Прототип.</div>
-              <div className="footer-links">
-                <Link href="/help">Тусламж ба 360° зураг авах заавар</Link>
-                <Link href="/pricing">Үнэ</Link>
-                <Link href="/login">Агент, админ нэвтрэх</Link>
-              </div>
-            </div>
-          </footer>
+          <Footer />
          </AuthProvider>
         </ToastProvider>
       </body>

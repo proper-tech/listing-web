@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { Category, SearchResult, Stats } from '@/lib/types';
-import { CATS, CAT_KEYS, DISTRICTS } from '@/lib/constants';
+import { CATS, CAT_KEYS } from '@/lib/constants';
 import { getStats, searchListings } from '@/lib/mock/api';
 import { Grid } from './ListingCard';
 import HeroSearch from './HeroSearch';
@@ -44,21 +44,14 @@ export default function HomeClient() {
   const [deal, setDeal] = useState<'sale' | 'rent'>('sale');
   const cnt = (d: string, c: string) => data?.stats.counts[`${d}:${c}`] || 0;
   const dealTotal = (d: string) => CAT_KEYS.reduce((n, k) => n + cnt(d, k), 0);
-  const stat = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleString('mn-MN'));
   return (
     <>
       <section className="hero">
         <HeroVideo src="/video/3d-video.mp4" />
         <div className="glass">
-          <span className="eyebrow"><span className="pulse" />360° виртуал аялал</span>
           <h1>Байраа ирэхээсээ өмнө <em className="nowrap">360°-аар</em> үзээрэй</h1>
           <p>Орон сууц, хашаа байшин, газар, оффис — зарна, түрээслүүлнэ.</p>
           <HeroSearch />
-          <dl className="hero-stats">
-            <div><dt>Идэвхтэй зар</dt><dd>{stat(data?.stats.total)}</dd></div>
-            <div><dt>360° аялалтай</dt><dd>{stat(data?.tours.total)}</dd></div>
-            <div><dt>Дүүрэг</dt><dd>{DISTRICTS.length}</dd></div>
-          </dl>
         </div>
         <a href="#browse" className="scroll-cue" aria-label="Доош гүйлгэх"><span /></a>
       </section>
@@ -133,7 +126,7 @@ export default function HomeClient() {
       {data && data.tours.items.length > 0 && (
         <section className="block">
           <div className="section-head">
-            <div><span className="kicker">360°</span><h2>360° аялалтай зар</h2><p className="section-sub">Очихгүйгээр өрөө бүрийг нь үзэх боломжтой зарууд.</p></div>
+            <div><h2>360° аялалтай зар</h2><p className="section-sub">Очихгүйгээр өрөө бүрийг нь үзэх боломжтой зарууд.</p></div>
             <Link className="more" href="/search?tour=1">Бүгдийг харах →</Link>
           </div>
           <Grid items={data.tours.items} />
