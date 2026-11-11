@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Golos_Text } from 'next/font/google';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import 'leaflet/dist/leaflet.css';
@@ -10,14 +11,17 @@ import { AuthProvider } from '@/components/Auth';
 import { PANNELLUM_CSS } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: { default: 'Гэр360 — Үл хөдлөх хөрөнгийн зар, 360° аялал', template: '%s — Гэр360' },
+  title: { default: 'ProperTech — Үл хөдлөх хөрөнгийн зар, 360° аялал', template: '%s — ProperTech' },
   description: 'Орон сууц, хашаа байшин, газар, оффис зарна, түрээслүүлнэ. Байраа 360° аялалаар үзээрэй.',
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#c39a3e' };
+
+// Brand font (proper.css --font). Has Cyrillic incl. Mongolian Ө/Ү.
+const golos = Golos_Text({ subsets: ['cyrillic', 'latin'], variable: '--font-golos', display: 'swap' });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="mn">
+    <html lang="mn" className={golos.variable}>
       <head>
         <link rel="stylesheet" href={PANNELLUM_CSS} />
       </head>
@@ -30,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="wrap">{children}</main>
           <footer className="footer">
             <div className="wrap footer-inner">
-              <div><b>Гэр360</b> — үл хөдлөх хөрөнгийн зар, 360° аялалтай. Прототип.</div>
+              <div><b>ProperTech</b> — үл хөдлөх хөрөнгийн зар, 360° аялалтай. Прототип.</div>
               <div className="footer-links">
                 <Link href="/help">Тусламж ба 360° зураг авах заавар</Link>
                 <Link href="/pricing">Үнэ</Link>

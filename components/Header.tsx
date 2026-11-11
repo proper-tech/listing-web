@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useFavs } from '@/lib/store';
 import { useAuth } from './Auth';
 import { CATS, CAT_KEYS } from '@/lib/constants';
+import CatIcon from './CatIcon';
 
 // Топ баар: ProperTech загвар (proper.css-ийн .topbar / .nav / .dd / .menu).
 // Зарах / Түрээслэх гэсэн dropdown-д ангиллуудыг CATS-оос авна.
@@ -31,7 +32,7 @@ export default function Header() {
       <div className="menu" data-deal={deal}>
         {CAT_KEYS.map((k) => (
           <Link key={k} href={`/search?deal=${deal}&cat=${k}`}>
-            <span className="ico">{CATS[k].ico}</span><span>{CATS[k].name}</span><span className="n" />
+            <span className="ico"><CatIcon cat={k} size={18} /></span><span>{CATS[k].name}</span><span className="n" />
           </Link>
         ))}
       </div>
@@ -41,12 +42,10 @@ export default function Header() {
   return (
     <header className="topbar">
       <div className="wrap topbar-inner">
-        <Link href="/" className="logo" aria-label="Гэр360">
-          <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
-            <rect x="5" y="3" width="6.5" height="26" fill="currentColor" />
-            <path fill="var(--brand)" fillRule="evenodd" d="M11 3h16v16H11z M14.2 6.2h9.6v3.6h-9.6z M14.2 12.2h9.6v3.6h-9.6z" />
-          </svg>
-          <span>Гэр<i>360</i></span>
+        <Link href="/" className="logo" aria-label="ProperTech">
+          {/* gold emblem cut from public/logos/logo2.jpeg (transparent PNG); used as a CSS mask and painted in the brand gold, see .logo .mark */}
+          <span className="mark" aria-hidden="true" />
+          <span>Proper<i>Tech</i></span>
         </Link>
         <nav className="nav" id="nav">
           {dropdown('sale', 'Зарах')}
@@ -66,7 +65,7 @@ export default function Header() {
             <button className="btn btn-sm" onClick={logout}>Гарах</button>
           </div>
         ) : (
-          <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn">Агент нэвтрэх</Link>
+          <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn">Агентаар нэвтрэх</Link>
         ))}
       </div>
     </header>

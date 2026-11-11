@@ -35,7 +35,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
     return () => { stale = true; };
   }, [id, authLoading, user?.id]);
 
-  useEffect(() => { if (l && l !== 'missing') document.title = `${l.title} — Гэр360`; }, [l]);
+  useEffect(() => { if (l && l !== 'missing') document.title = `${l.title} — ProperTech`; }, [l]);
 
   if (!l) return <div className="loading">Ачаалж байна…</div>;
   if (l === 'missing') return <div className="empty">Зар олдсонгүй. <Link href="/">Нүүр хуудас</Link></div>;

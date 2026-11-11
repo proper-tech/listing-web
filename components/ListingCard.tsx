@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Listing } from '@/lib/types';
 import { CATS, NOIMG, STATUS_MN } from '@/lib/constants';
-import { fmtPrice, specLine, timeAgo } from '@/lib/format';
+import { fmtPrice, specLine } from '@/lib/format';
 import FavButton from './FavButton';
 
 type CardListing = Pick<Listing, 'id' | 'title' | 'price' | 'dealType' | 'category' | 'rooms' | 'area' | 'floor' | 'buildingFloors' | 'photos' | 'location' | 'createdAt' | 'hasTour' | 'promo'>
@@ -33,13 +33,14 @@ export default function ListingCard({ l, preview = false }: { l: CardListing; pr
       <div className="card-img">
         <img loading="lazy" src={coverImage(l)} alt="" />
         <div className="badges"><Badges l={l} /></div>
-        {!preview && <FavButton id={l.id} />}
       </div>
       <div className="card-body">
-        <div className="price"><Price l={l} /></div>
+        <div className="card-top">
+          <div className="price"><Price l={l} /></div>
+          {!preview && <FavButton id={l.id} />}
+        </div>
         <div className="title">{l.title}</div>
-        <div className="meta">{specLine(l) || CATS[l.category].name}</div>
-        <div className="loc" suppressHydrationWarning>{l.location.district} · {timeAgo(l.createdAt)}</div>
+        <div className="meta">{specLine(l) || CATS[l.category].name} · {l.location.district}</div>
       </div>
     </>
   );
@@ -47,7 +48,7 @@ export default function ListingCard({ l, preview = false }: { l: CardListing; pr
   return preview ? <div className={cls}>{body}</div> : <Link className={cls} href={`/listing/${l.id}`}>{body}</Link>;
 }
 
-export function Grid({ items, empty = 'Зар олдсонгүй' }: { items: CardListing[]; empty?: string }) {
+export function Grid({ items, empty = 'Зар олдсонгүй', className = '' }: { items: CardListing[]; empty?: string; className?: string }) {
   if (!items.length) return <div className="empty">{empty}</div>;
-  return <div className="grid">{items.map((l) => <ListingCard key={l.id} l={l} />)}</div>;
+  return <div className={`grid ${className}`.trim()}>{items.map((l) => <ListingCard key={l.id} l={l} />)}</div>;
 }
