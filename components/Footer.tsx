@@ -87,7 +87,7 @@ export default function Footer() {
       </div>
 
       <div className="wrap sf-bottom">
-        <span>© {year} {SITE.name}. Бүх эрх хуулиар хамгаалагдсан.</span>
+        <span>© {year} {SITE.name}</span>
         <span>Үл хөдлөх хөрөнгийн зар · 360° аялал</span>
       </div>
     </footer>

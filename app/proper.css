@@ -877,3 +877,7 @@ html::-webkit-scrollbar-corner, .filters::-webkit-scrollbar-corner { background:
 .card:hover .card-more svg { transform: translateX(3px); }
 .grid-feature .card-img { aspect-ratio: 16/9; }
 @media (max-width: 520px) { .card .card-body { padding: 16px 16px 16px; } .card .title { font-size: 17px; } .card .card-foot .price { font-size: 21px; } }
+
+/* Нарийвчилсан хэсэг: "Шүүлтүүр цэвэрлэх" товчийг доод мөрөнд баруун талд */
+.fbar-adv .ff-end { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; margin-top: -6px; }
+.fbar-adv .ff-end .flink { height: 32px; }

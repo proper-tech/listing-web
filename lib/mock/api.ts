@@ -154,6 +154,9 @@ export async function searchListings(params: URLSearchParams | Record<string, st
     range('ppmMin', 'ppmMax', (l) => l.pricePerM2);
     range('areaMin', 'areaMax', (l) => l.area);
     range('floorMin', 'floorMax', (l) => l.floor);
+    // Нэг давхар сонгосон бол яг тэр давхрын зарыг (B1 = -1).
+    const fl = num(g('floor'));
+    if (fl !== null) by((l) => l.floor === fl);
     range('bfMin', 'bfMax', (l) => l.buildingFloors);
     range('yearMin', 'yearMax', (l) => l.yearInUse);
     if (g('rooms')) {
@@ -357,6 +360,7 @@ export async function sendInquiry(id: string, b: { name: unknown; phone: unknown
   const email = normEmail(b.email);
   const message = cleanStr(b.message, 1000);
   if (name.length < 2) fail('Нэрээ оруулна уу.');
+  if (!/^[\p{L}][\p{L}\s.'-]*$/u.test(name)) fail('Нэрэнд зөвхөн үсэг бичнэ үү.');
   if (!phone) fail('Утасны дугаар 8 оронтой байна.');
   if (email && !validEmail(email)) fail('Имэйл хаяг буруу байна.');
   if (message.length < 5) fail('Мессежээ бичнэ үү.');

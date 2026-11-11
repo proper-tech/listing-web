@@ -12,8 +12,8 @@ import { ResultsMap } from './Maps';
 const FLOORS = [-3, -2, -1, ...Array.from({ length: 40 }, (_, i) => i + 1)];
 const SORTS: [string, string][] = [['new', 'Шинэ эхэндээ'], ['cheap', 'Хямд эхэндээ'], ['expensive', 'Үнэтэй эхэндээ'], ['ppm2', 'м² үнэ (бага)'], ['area', 'Талбай (их)']];
 // "Нарийвчилсан" хэсэгт хамаарах параметрүүд (идэвхтэй тоог товчин дээр харуулна)
-const ADV_KEYS = ['priceMin', 'priceMax', 'roomsMin', 'rooms', 'ppmMin', 'ppmMax', 'areaMin', 'areaMax', 'floorMin', 'floorMax', 'notFirst', 'notLast',
-  'bfMin', 'bfMax', 'yearMin', 'yearMax', 'posted', 'seller', 'tour', 'leasing', 'garage'];
+const ADV_KEYS = ['priceMin', 'priceMax', 'roomsMin', 'rooms', 'areaMin', 'areaMax', 'floor', 'notFirst', 'notLast',
+  'yearMin', 'yearMax', 'posted', 'tour', 'leasing', 'garage'];
 const DEALS: { key: '' | 'sale' | 'rent'; label: string }[] = [
   { key: '', label: 'Бүгд' }, { key: 'sale', label: 'Зарна' }, { key: 'rent', label: 'Түрээс' },
 ];
@@ -25,8 +25,6 @@ const I = {
   chevron: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>,
   grid: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></svg>,
   map: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" /><path d="M9 4v13M15 6.5v13" /></svg>,
-  home: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5V11Z" /></svg>,
-  key: <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4" /><path d="m11 12 8-8M16 7l2 2M14 9l2 2" /></svg>,
   pin: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></svg>,
 };
 
@@ -158,14 +156,6 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
               </div>
             </div>
             <div className="ff">
-              <span className="ff-label">Зар оруулагч</span>
-              <div className="fselect">
-                <select name="seller" defaultValue={v('seller')} onChange={onInput} aria-label="Зар оруулагч">
-                  <option value="">Бүгд</option><option value="owner">Эзэмшигч</option><option value="agent">Агент</option>
-                </select>{I.chevron}
-              </div>
-            </div>
-            <div className="ff">
               <span className="ff-label">Нийтэлсэн</span>
               <div className="fselect">
                 <select name="posted" defaultValue={v('posted')} onChange={onInput} aria-label="Нийтэлсэн">
@@ -174,22 +164,16 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
               </div>
             </div>
 
-            <div className="ff ff-wide"><span className="ff-label">м² үнэ (₮)</span>{pair('ppmMin', 'ppmMax', '₮')}</div>
             <div className="ff"><span className="ff-label">Талбай (м²)</span>{pair('areaMin', 'areaMax', 'м²', 6)}</div>
             <div className="ff">
               <span className="ff-label">Хэдэн давхарт</span>
-              <div className="ff-pair">
-                {(['floorMin', 'floorMax'] as const).map((k, i) => (
-                  <div className="fselect" key={k}>
-                    <select name={k} defaultValue={v(k)} onChange={onInput} aria-label={i ? 'Дээд давхар' : 'Доод давхар'}>
-                      <option value="">{i ? 'Дээд' : 'Доод'}</option>
-                      {FLOORS.map((f) => <option key={f} value={f}>{fmtFloor(f)}</option>)}
-                    </select>{I.chevron}
-                  </div>
-                ))}
+              <div className="fselect">
+                <select name="floor" defaultValue={v('floor')} onChange={onInput} aria-label="Хэдэн давхарт">
+                  <option value="">Хамаагүй</option>
+                  {FLOORS.map((f) => <option key={f} value={f}>{fmtFloor(f)} давхар</option>)}
+                </select>{I.chevron}
               </div>
             </div>
-            <div className="ff"><span className="ff-label">Барилгын давхар</span>{pair('bfMin', 'bfMax', undefined, 3)}</div>
 
             <div className="ff"><span className="ff-label">Ашиглалтад орсон он</span>{pair('yearMin', 'yearMax', undefined, 4, ['Оноос', 'Хүртэл'])}</div>
             <div className="ff ff-checks">
@@ -212,7 +196,6 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
           {DEALS.map(({ key, label }) => (
             <button key={key || 'all'} type="button" role="tab" aria-selected={deal === key} className={`ftab ${deal === key ? 'on' : ''}`}
               onClick={() => setParam('deal', key)}>
-              {key === '' ? I.grid : key === 'sale' ? I.home : I.key}
               <span>{label}</span>
               <b className="fcount">{counts ? counts[key] ?? 0 : '·'}</b>
             </button>

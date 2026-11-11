@@ -3,6 +3,11 @@ import { useState } from 'react';
 import { normPhone, sendInquiry } from '@/lib/mock/api';
 import { useToast } from './Toast';
 
+// Нэр: зөвхөн үсэг (кирилл, латин), зай, зураас. Утас: зөвхөн 8 цифр.
+const NAME_RE = /^[\p{L}][\p{L}\s.'-]*$/u;
+const onlyNameChars = (v: string) => v.replace(/[^\p{L}\s.'-]/gu, '').replace(/\s{2,}/g, ' ').slice(0, 60);
+const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 8);
+
 type Errors = Partial<Record<'name' | 'phone' | 'email' | 'message', string>>;
 
 /** Зарын хуудсан дээрх "Энэ зарын талаар холбогдох" форм. Хүсэлт зар оруулагчийн "Миний зар" хуудсанд очно. */
@@ -13,14 +18,21 @@ export default function InquiryForm({ id }: { id: string; title?: string }) {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setF((x) => ({ ...x, [k]: e.target.value }));
+    const raw = e.target.value;
+    const value = k === 'name' ? onlyNameChars(raw) : k === 'phone' ? onlyDigits(raw) : raw;
+    setF((x) => ({ ...x, [k]: value }));
     if (err[k]) setErr((x) => ({ ...x, [k]: undefined }));
   };
 
   const validate = (): Errors => {
     const e: Errors = {};
-    if (f.name.trim().length < 2) e.name = 'Нэрээ оруулна уу.';
-    if (!normPhone(f.phone)) e.phone = 'Утасны дугаар 8 оронтой байна.';
+    const name = f.name.trim();
+    if (!name) e.name = 'Нэрээ оруулна уу.';
+    else if (name.length < 2) e.name = 'Нэр хамгийн багадаа 2 үсэгтэй байна.';
+    else if (!NAME_RE.test(name)) e.name = 'Нэрэнд зөвхөн үсэг бичнэ үү.';
+    if (!f.phone) e.phone = 'Утасны дугаараа оруулна уу.';
+    else if (f.phone.length !== 8) e.phone = 'Утасны дугаар 8 оронтой байна.';
+    else if (!normPhone(f.phone)) e.phone = 'Утасны дугаар 5, 6, 7, 8, 9-өөр эхэлнэ.';
     if (f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = 'Имэйл хаяг буруу байна.';
     if (f.message.trim().length < 5) e.message = 'Мессежээ бичнэ үү.';
     return e;
@@ -66,7 +78,7 @@ export default function InquiryForm({ id }: { id: string; title?: string }) {
     <form className="panel inq" onSubmit={submit} noValidate>
       <h3>Энэ зарын талаар холбогдох</h3>
       {field('name', 'Нэр *', <input type="text" value={f.name} onChange={set('name')} placeholder="Таны нэр" autoComplete="name" maxLength={60} aria-invalid={!!err.name} />)}
-      {field('phone', 'Утас *', <input type="tel" value={f.phone} onChange={set('phone')} placeholder="9911 2233" autoComplete="tel" inputMode="tel" maxLength={16} aria-invalid={!!err.phone} />)}
+      {field('phone', 'Утас *', <input type="tel" value={f.phone} onChange={set('phone')} placeholder="99112233" autoComplete="tel-national" inputMode="numeric" pattern="[0-9]{8}" maxLength={8} aria-invalid={!!err.phone} />)}
       {field('email', 'Имэйл', <input type="email" value={f.email} onChange={set('email')} placeholder="tanii@email.mn" autoComplete="email" maxLength={254} aria-invalid={!!err.email} />)}
       {field('message', 'Мессеж *', <textarea value={f.message} onChange={set('message')} rows={4} placeholder="Энэ байрыг сонирхож байна…" maxLength={1000} aria-invalid={!!err.message} />)}
       <button type="submit" className="btn btn-primary btn-block inq-send" disabled={busy}>
