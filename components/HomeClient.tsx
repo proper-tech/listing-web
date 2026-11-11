@@ -35,6 +35,7 @@ export default function HomeClient() {
   return (
     <>
       <section className="hero">
+        <video className="hero-video" src="/video/hero.mp4" autoPlay muted loop playsInline aria-hidden="true" />
         <h1>Байраа ирэхээсээ өмнө 360°-аар үзээрэй</h1>
         <p>{data ? `${data.stats.total} идэвхтэй зар` : 'Идэвхтэй зарууд'} · Орон сууц, хашаа байшин, газар, оффис</p>
         <HeroSearch />

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import 'leaflet/dist/leaflet.css';
 import './globals.css';
+import './proper.css';
 import Header from '@/components/Header';
 import { ToastProvider } from '@/components/Toast';
 import { AuthProvider } from '@/components/Auth';

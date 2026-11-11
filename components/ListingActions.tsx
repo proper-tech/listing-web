@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getPhone, reportListing } from '@/lib/mock/api';
 import { useToast } from './Toast';
 import FavButton from './FavButton';
@@ -7,9 +7,14 @@ import FavButton from './FavButton';
 export function PhoneAndFav({ id, title }: { id: string; title: string }) {
   const toast = useToast();
   const [phone, setPhone] = useState<string | null>(null);
-  const reveal = async () => {
-    try { setPhone(await getPhone(id)); } catch (e) { toast((e as Error).message); }
-  };
+  // Утасны дугаарыг зар нээгдэхэд шууд харуулна (товч дарах шаардлагагүй).
+  useEffect(() => {
+    let stale = false;
+    setPhone(null);
+    getPhone(id).then((p) => { if (!stale) setPhone(p); }).catch((e) => { if (!stale) toast((e as Error).message); });
+    return () => { stale = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
   const share = async () => {
     const url = window.location.href;
     try {
@@ -21,7 +26,7 @@ export function PhoneAndFav({ id, title }: { id: string; title: string }) {
     <>
       {phone
         ? <a className="btn btn-primary btn-block" href={`tel:${phone}`}>📞 {phone.replace(/(\d{4})(\d{4})/, '$1-$2')}</a>
-        : <button className="btn btn-primary btn-block" onClick={reveal}>📞 Утасны дугаар харах</button>}
+        : <div className="btn btn-block" aria-busy="true">📞 Ачаалж байна…</div>}
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <FavButton id={id} variant="button" />
         <button className="btn btn-block" onClick={share}>↗ Хуваалцах</button>

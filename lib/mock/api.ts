@@ -91,9 +91,13 @@ const effStatus = (l: StoredListing): ListingStatus =>
   l.status === 'active' && Date.parse(l.expiresAt) < Date.now() ? 'expired' : l.status;
 const isLive = (l: StoredListing) => effStatus(l) === 'active';
 
+// Нийтэд харуулах зарт утасны дугаар хэзээ ч гарахгүй байх ёстой.
+// Хуучин хадгалагдсан өгөгдөлд ямар ч талбар үлдсэн байсан ч энд бүгдийг нь хасна.
+const PRIVATE_LISTING_KEYS = ['ownerPhone', 'ownerId', 'sellerPhone', 'phone', 'ownerToken'];
 function pub(l: StoredListing): Listing {
-  const { ownerPhone: _p, ownerId: _o, ...rest } = l; // eslint-disable-line @typescript-eslint/no-unused-vars
-  return { ...rest, status: effStatus(l), hasTour: hasTour(l), promo: promoRank(l) };
+  const copy: Record<string, unknown> = { ...l };
+  for (const k of PRIVATE_LISTING_KEYS) delete copy[k];
+  return { ...(copy as unknown as Listing), status: effStatus(l), hasTour: hasTour(l), promo: promoRank(l) };
 }
 function publicUser(u: StoredUser): User {
   const { password: _pw, ...rest } = u; // eslint-disable-line @typescript-eslint/no-unused-vars

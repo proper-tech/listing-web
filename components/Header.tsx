@@ -4,34 +4,58 @@ import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useFavs } from '@/lib/store';
 import { useAuth } from './Auth';
+import { CATS, CAT_KEYS } from '@/lib/constants';
 
+// Топ баар: ProperTech загвар (proper.css-ийн .topbar / .nav / .dd / .menu).
+// Зарах / Түрээслэх гэсэн dropdown-д ангиллуудыг CATS-оос авна.
 export default function Header() {
   const path = usePathname();
   const q = useSearchParams();
   const favs = useFavs();
   const auth = useAuth();
-  // The header hydrates inside <Suspense>, possibly after the login check has finished.
-  // Render login-dependent parts only after this component mounted, so the first client
-  // render matches the server HTML (no hydration mismatch).
+  // Hydration mismatch-ээс сэргийлж нэвтрэлтээс хамаарах хэсгийг mount-ийн дараа л харуулна.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const user = mounted ? auth.user : null;
   const loading = !mounted || auth.loading;
   const { logout } = auth;
-  const on = (key: string) => {
-    if (key === 'sale' || key === 'rent') return path === '/search' && (q.get('deal') || 'sale') === key ? 'on' : '';
-    return path === '/' + key ? 'on' : '';
-  };
+
+  const onDeal = (deal: 'sale' | 'rent') =>
+    path === '/search' && (q.get('deal') || 'sale') === deal ? 'on' : '';
+  const onPage = (key: string) => (path === '/' + key ? 'on' : '');
+
+  const dropdown = (deal: 'sale' | 'rent', label: string) => (
+    <div className="dd" data-nav={deal}>
+      <Link href={`/search?deal=${deal}`} className={onDeal(deal)}>{label}</Link>
+      <button type="button" className="caret" aria-expanded="false" aria-label={`${label}: төрөл сонгох`}>▾</button>
+      <div className="menu" data-deal={deal}>
+        {CAT_KEYS.map((k) => (
+          <Link key={k} href={`/search?deal=${deal}&cat=${k}`}>
+            <span className="ico">{CATS[k].ico}</span><span>{CATS[k].name}</span><span className="n" />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <header className="topbar">
       <div className="wrap topbar-inner">
-        <Link href="/" className="logo"><span className="logo-mark">360</span>Гэр360</Link>
-        <nav className="nav">
-          <Link href="/search?deal=sale" className={on('sale')}>Зарна</Link>
-          <Link href="/search?deal=rent" className={on('rent')}>Түрээс</Link>
-          <Link href="/saved" className={on('saved')}>Хадгалсан <span className="count">{favs.length || ''}</span></Link>
-          {user && <Link href="/my" className={on('my')}>Миний зар</Link>}
-          {user?.role === 'admin' && <Link href="/admin" className={on('admin')}>Админ</Link>}
+        <Link href="/" className="logo" aria-label="Гэр360">
+          <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="5" y="3" width="6.5" height="26" fill="currentColor" />
+            <path fill="var(--brand)" fillRule="evenodd" d="M11 3h16v16H11z M14.2 6.2h9.6v3.6h-9.6z M14.2 12.2h9.6v3.6h-9.6z" />
+          </svg>
+          <span>Гэр<i>360</i></span>
+        </Link>
+        <nav className="nav" id="nav">
+          {dropdown('sale', 'Зарах')}
+          {dropdown('rent', 'Түрээслэх')}
+          <Link href="/saved" className={onPage('saved')}>
+            Хадгалсан <span className="count">{favs.length || ''}</span>
+          </Link>
+          {user && <Link href="/my" className={onPage('my')}>Миний зар</Link>}
+          {user?.role === 'admin' && <Link href="/admin" className={onPage('admin')}>Админ</Link>}
         </nav>
         {!loading && (user ? (
           <div className="user-box">
