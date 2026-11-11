@@ -144,7 +144,9 @@ export async function searchListings(params: URLSearchParams | Record<string, st
     if (g('district')) by((l) => l.location.district === g('district'));
     if (g('placement')) by((l) => l.placement === g('placement') && promoRank(l, t) > 0);
     const range = (lo: string, hi: string, f: (l: StoredListing) => number | undefined) => {
-      const a = num(g(lo)), b = num(g(hi));
+      // Давхараас бусад шүүлтүүрт сөрөг утгыг үл тооцно (хуучин URL-д үлдсэн байж болно).
+      const ok = (x: number | null) => (x !== null && (lo === 'floorMin' || x >= 0) ? x : null);
+      const a = ok(num(g(lo))), b = ok(num(g(hi)));
       if (a !== null) by((l) => f(l) != null && f(l)! >= a);
       if (b !== null) by((l) => f(l) != null && f(l)! <= b);
     };

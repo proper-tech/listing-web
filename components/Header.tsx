@@ -56,6 +56,7 @@ export default function Header() {
           {user && <Link href="/my" className={onPage('my')}>Миний зар</Link>}
           {user?.role === 'admin' && <Link href="/admin" className={onPage('admin')}>Админ</Link>}
         </nav>
+        <div className="topbar-right">
         {!loading && (user ? (
           <div className="user-box">
             <Link href="/post" className="btn btn-primary post-btn">+ Зар нэмэх</Link>
@@ -65,8 +66,12 @@ export default function Header() {
             <button className="btn btn-sm" onClick={logout}>Гарах</button>
           </div>
         ) : (
-          <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn">Агентаар нэвтрэх</Link>
+          <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></svg>
+            Нэвтрэх
+          </Link>
         ))}
+        </div>
       </div>
     </header>
   );

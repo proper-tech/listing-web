@@ -26,11 +26,14 @@ export function fmtDate(iso: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** Давхарыг харуулах: сөрөг утга нь подвал (B1, B2 ...). */
+export const fmtFloor = (n: number) => (n < 0 ? `B${-n}` : String(n));
+
 export function specLine(l: Pick<Listing, 'rooms' | 'area' | 'floor' | 'buildingFloors'>): string {
   const p: string[] = [];
   if (l.rooms) p.push(`${l.rooms} өрөө`);
   if (l.area) p.push(`${l.area} м²`);
-  if (l.floor && l.buildingFloors) p.push(`${l.floor}/${l.buildingFloors} давхар`);
-  else if (l.floor) p.push(`${l.floor} давхар`);
+  if (l.floor && l.buildingFloors) p.push(`${fmtFloor(l.floor)}/${l.buildingFloors} давхар`);
+  else if (l.floor) p.push(`${fmtFloor(l.floor)} давхар`);
   return p.join(' · ');
 }

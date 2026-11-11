@@ -1,22 +1,20 @@
 import type { Category } from '@/lib/types';
 
-/* Line icons for the property categories (replace the emoji in CATS[k].ico on the home page and header menu).
-   24px grid, 1.6 stroke, currentColor, so they take the gold text colour of whatever holds them. */
+// Ангилал бүрийн шугаман дүрс (emoji-гийн оронд, сайтын загвартай нийцтэй).
 const PATHS: Record<Category, React.ReactNode> = {
-  apartment: <path d="M5 21V4h10v17M15 9h4v12M3 21h18M8 7.5h1M11 7.5h1M8 11h1M11 11h1M8 14.5h1M11 14.5h1M9.5 21v-3h1v3" />,
-  house: <path d="M3 11l9-7 9 7M5 9.5V21h14V9.5M10 21v-6h4v6" />,
-  land: <path d="M3 20h18M4.5 20c1.2-3.6 3.8-5.5 7.5-5.5s6.3 1.9 7.5 5.5M12 14.5V7.5M12 10c-2.2 0-3.6-1.5-3.6-3.6 2.1 0 3.6 1.4 3.6 3.6zM12 9c1.9 0 3.1-1.3 3.1-3.1-1.9 0-3.1 1.3-3.1 3.1z" />,
-  office: <><rect x="3" y="7" width="18" height="13" rx="1.5" /><path d="M9 7V5.2c0-.7.5-1.2 1.2-1.2h3.6c.7 0 1.2.5 1.2 1.2V7M3 12.5h18M10.5 12.5v2h3v-2" /></>,
-  shop: <path d="M4.5 4h15L21 9H3zM3 9c0 1.4 1.1 2.5 2.5 2.5S8 10.4 8 9c0 1.4 1.1 2.5 2.5 2.5S13 10.4 13 9c0 1.4 1.1 2.5 2.5 2.5S18 10.4 18 9c0 1.4 1.1 2.5 2.5 2.5M5 11.5V20h14v-8.5M10 20v-5h4v5" />,
-  warehouse: <path d="M3 21V9l6 4V9l6 4V4h6v17zM3 21h18M7 17.5h2M12 17.5h2M17 17.5h2" />,
-  garage: <path d="M5 12l1.7-4.4A2.5 2.5 0 0 1 9 6h6a2.5 2.5 0 0 1 2.3 1.6L19 12M4 12h16v5H4zM6 17v2.5M18 17v2.5M7.5 14.5h1M15.5 14.5h1" />,
-  summer_house: <path d="M12 3l5 7h-3l4 6H6l4-6H7zM12 16v5M9 21h6" />,
+  apartment: <><rect x="5" y="3" width="14" height="18" rx="1.5" /><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10.5 21v-2.5h3V21" /></>,
+  house: <><path d="M3.5 11 12 4l8.5 7" /><path d="M5.5 9.5V20h13V9.5" /><path d="M10 20v-5h4v5" /></>,
+  land: <><path d="M3 18c3-2 6-2 9 0s6 2 9 0" /><path d="M3 14c3-2 6-2 9 0s6 2 9 0" /><path d="M12 10V4M12 7l-2.5-2M12 8.5l2.5-2" /></>,
+  office: <><rect x="3.5" y="7" width="17" height="12.5" rx="2" /><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3.5 12.5h17" /></>,
+  shop: <><path d="M4 9.5 5.5 4h13L20 9.5" /><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0" /><path d="M5.5 12v8h13v-8M10 20v-4.5h4V20" /></>,
+  warehouse: <><path d="M3 20V9l9-5 9 5v11" /><path d="M7 20v-7h10v7M7 16h10" /></>,
+  garage: <><path d="M5 16.5h14M6.5 16.5V19M17.5 16.5V19" /><path d="M5 16.5v-3.2L7 9h10l2 4.3v3.2" /><circle cx="8.5" cy="13.8" r=".6" /><circle cx="15.5" cy="13.8" r=".6" /></>,
+  summer_house: <><path d="M12 3 6.5 10h3L5.5 15h5v5h3v-5h5l-4-5h3L12 3Z" /></>,
 };
 
-export default function CatIcon({ cat, size = 22 }: { cat: Category; size?: number }) {
+export default function CatIcon({ cat, size }: { cat: Category; size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {PATHS[cat]}
     </svg>
   );

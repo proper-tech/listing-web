@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { Listing } from '@/lib/types';
 import { CATS } from '@/lib/constants';
-import { fmtDate, fmtFull, timeAgo } from '@/lib/format';
+import { fmtDate, fmtFloor, fmtFull, timeAgo } from '@/lib/format';
 import { getListing, searchListings } from '@/lib/mock/api';
 import { Badges, Grid, Price } from './ListingCard';
 import ListingMedia from './ListingMedia';
@@ -43,7 +43,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
   const specs: [string, string | number | undefined | null | false][] = [
     ['Ангилал', CATS[l.category].name], ['Төрөл', l.dealType === 'rent' ? 'Түрээслүүлнэ' : 'Зарна'],
     ['Өрөө', l.rooms], ['Талбай', l.area && `${l.area} м²`], ['м² үнэ', l.pricePerM2 && fmtFull(l.pricePerM2)],
-    ['Хэдэн давхарт', l.floor], ['Барилгын давхар', l.buildingFloors], ['Ашиглалтанд орсон он', l.yearInUse],
+    ['Хэдэн давхарт', l.floor != null ? fmtFloor(l.floor) : undefined], ['Барилгын давхар', l.buildingFloors], ['Ашиглалтанд орсон он', l.yearInUse],
     ['Шал', l.floorMaterial], ['Тагт', l.balconies], ['Цонх', l.windowType], ['Цонхны тоо', l.windowCount],
     ['Хаалга', l.doorType], ['Гараж', l.garage ? 'Байгаа' : null], ['Лизинг', l.leasing ? 'Боломжтой' : 'Боломжгүй'],
     ['Төлбөрийн нөхцөл', (l.paymentTerms || []).join(', ')],

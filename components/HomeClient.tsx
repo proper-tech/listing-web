@@ -6,8 +6,8 @@ import { CATS, CAT_KEYS, DISTRICTS } from '@/lib/constants';
 import { getStats, searchListings } from '@/lib/mock/api';
 import { Grid } from './ListingCard';
 import HeroSearch from './HeroSearch';
-import HeroVideo from './HeroVideo';
 import CatIcon from './CatIcon';
+import HeroVideo from './HeroVideo';
 
 type Data = { stats: Stats; top: SearchResult; fresh: SearchResult; tours: SearchResult };
 type Deal = 'sale' | 'rent';
@@ -30,7 +30,6 @@ const STEPS: { title: string; text: string; icon: React.ReactNode }[] = [
 
 export default function HomeClient() {
   const [data, setData] = useState<Data | null>(null);
-  const [deal, setDeal] = useState<Deal>('sale');
   useEffect(() => {
     let stale = false;
     Promise.all([
@@ -42,10 +41,10 @@ export default function HomeClient() {
     return () => { stale = true; };
   }, []);
 
-  const cnt = (c: string) => data?.stats.counts[`${deal}:${c}`] || 0;
-  const dealTotal = (d: Deal) => CAT_KEYS.reduce((n, k) => n + (data?.stats.counts[`${d}:${k}`] || 0), 0);
+  const [deal, setDeal] = useState<'sale' | 'rent'>('sale');
+  const cnt = (d: string, c: string) => data?.stats.counts[`${d}:${c}`] || 0;
+  const dealTotal = (d: string) => CAT_KEYS.reduce((n, k) => n + cnt(d, k), 0);
   const stat = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleString('mn-MN'));
-
   return (
     <>
       <section className="hero">
@@ -63,40 +62,37 @@ export default function HomeClient() {
         </div>
         <a href="#browse" className="scroll-cue" aria-label="Доош гүйлгэх"><span /></a>
       </section>
-
-      <section id="browse" className="block">
-        <div className="section-head">
+      <section className="home-cats">
+        <div className="hc-head">
           <div>
-            <span className="kicker">Ангилал</span>
-            <h2>Юу хайж байна вэ?</h2>
-            <p className="section-sub">Төрлөө сонгоод тухайн ангиллын бүх зарыг үзээрэй.</p>
+            <h2>Үл хөдлөх хөрөнгө</h2>
+            <p className="muted">Төрлөө сонгоод хайлтаа эхлүүлээрэй</p>
           </div>
-          <div className="seg" role="tablist" aria-label="Зарын төрөл">
+          <div className="ftabs" role="tablist" aria-label="Гүйлгээний төрөл">
             {(['sale', 'rent'] as const).map((d) => (
-              // a deal type with no listings at all can't be picked
-              <button key={d} type="button" role="tab" aria-selected={deal === d} className={deal === d ? 'on' : ''}
-                disabled={!!data && !dealTotal(d)}
-                onClick={() => setDeal(d)}>{d === 'sale' ? 'Зарна' : 'Түрээслүүлнэ'}</button>
+              <button key={d} type="button" role="tab" aria-selected={deal === d} className={`ftab ${deal === d ? 'on' : ''}`} onClick={() => setDeal(d)}>
+                <span>{d === 'sale' ? 'Зарна' : 'Түрээс'}</span>
+                <b className="fcount">{data ? dealTotal(d) : '·'}</b>
+              </button>
             ))}
           </div>
         </div>
-        <div className="cats">
+        <div className="hc-grid">
           {CAT_KEYS.map((k) => {
-            const inner = <>
-              <b>{CATS[k].name}</b>
-              <span className="n">{data ? `${cnt(k)} зар` : '…'}</span>
-              {CAT_ART[k]
-                ? <img className="cat-art" src={CAT_ART[k]} alt="" loading="lazy" />
-                : <span className="cat-art cat-art-icon" aria-hidden="true"><CatIcon cat={k} size={64} /></span>}
-            </>;
-            // no listings in this category for the chosen deal type: show the tile greyed out and not clickable
-            return data && !cnt(k)
-              ? <div key={k} className="cat is-empty" aria-disabled="true">{inner}</div>
-              : <Link key={k} className="cat" href={`/search?deal=${deal}&cat=${k}`}>{inner}</Link>;
+            const n = cnt(deal, k);
+            return (
+              <Link key={k} className={`hc-card ${data && !n ? 'is-empty' : ''}`} href={`/search?deal=${deal}&cat=${k}`}>
+                <span className={`hc-ico ${CAT_ART[k] ? 'has-art' : ''}`}>{CAT_ART[k] ? <img src={CAT_ART[k]} alt="" loading="lazy" /> : <CatIcon cat={k} />}</span>
+                <span className="hc-body">
+                  <b>{CATS[k].name}</b>
+                  <small>{data ? (n ? `${n} зар` : 'Зар алга') : '…'}</small>
+                </span>
+                <span className="hc-arrow" aria-hidden="true">→</span>
+              </Link>
+            );
           })}
         </div>
       </section>
-
       {!data ? <div className="loading">Ачаалж байна…</div> : <>
         {data.top.items.length > 0 && (
           <section className="block">
