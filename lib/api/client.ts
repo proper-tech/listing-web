@@ -1,6 +1,6 @@
 // Shared axios instance for the real backend (listing-server: Cloudflare Worker + Hono, Neon, R2).
-// Nothing uses it yet: pages still read lib/mock/api.ts. Move a call over by replacing the mock
-// function with e.g. `apiGet<SearchResult>('/api/listings', { params })`.
+// Used by sign-in (lib/api/auth.ts); other pages still read lib/mock/api.ts. Move a call over by replacing
+// the mock function with e.g. `apiGet<SearchResult>('/api/listings', { params })`.
 //
 // Where requests go:
 //  - Browser: a relative `/api/...` by default. next.config.ts forwards /api/* to API_URL, so the

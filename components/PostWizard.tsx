@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { cloneElement, useEffect, useRef, useState } from 'react';
 import type { Category, DealType, Hotspot, Placement, SellerType, TourRoom, User } from '@/lib/types';
 import {
   CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, ROOM_NAMES, type FieldKey,
@@ -12,6 +12,7 @@ import { canvasToBlob, resizeImage, upload } from '@/lib/images';
 import { getPannellum, type PannellumViewer } from '@/lib/pannellum';
 import { stitch } from '@/lib/stitch';
 import ListingCard from './ListingCard';
+import CatIcon from './CatIcon';
 import CaptureGuide from './CaptureGuide';
 import { LocationPicker } from './Maps';
 import { useToast } from './Toast';
@@ -54,13 +55,14 @@ function Wizard({ user }: { user: User }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ id: string; status: string } | null>(null);
+  const [tried, setTried] = useState<Record<number, boolean>>({}); // steps where "Дараах" was pressed: show every error
   useEffect(() => { draftCache = { userId: user.id, draft: d }; }, [d, user.id]);
 
   function validate(s: number): string | null {
     if (s === 1) {
-      if (d.title.trim().length < 5) return 'Гарчиг хамгийн багадаа 5 тэмдэгт байна.';
-      if (!(Number(d.price) > 0)) return 'Үнээ оруулна уу.';
-      if (!(Number(d.fields.area) > 0)) return 'Талбайгаа оруулна уу.';
+      const msgs = Object.values(detailIssues(d).errors);
+      if (msgs.length === 1) return msgs[0]!;
+      if (msgs.length) return `${msgs.length} талбарт алдаа байна. Улаанаар тэмдэглэсэн хэсгүүдийг засна уу.`;
     }
     if (s === 2 && d.photos.some((p) => p.uploading)) return 'Зургууд илгээгдэж дуусаагүй байна.';
     if (s === 3 && d.tour.rooms.some((r) => r.status === 'processing')) return '360° зураг боловсруулж дуусаагүй байна.';
@@ -75,10 +77,16 @@ function Wizard({ user }: { user: User }) {
     return null;
   }
   const go = (s: number) => { setError(''); setStep(Math.max(0, Math.min(STEP_NAMES.length - 1, s))); window.scrollTo(0, 0); };
-  const next = () => { const e = validate(step); if (e) setError(e); else go(step + 1); };
+  // on a failed step, mark it tried and move focus to the first invalid field so the user sees what to fix
+  const fail = (s: number, e: string) => {
+    setTried((t) => ({ ...t, [s]: true }));
+    setError(e);
+    setTimeout(() => document.querySelector<HTMLElement>('.wizard [aria-invalid="true"]')?.focus(), 0);
+  };
+  const next = () => { const e = validate(step); if (e) fail(step, e); else go(step + 1); };
 
   async function publish() {
-    for (let s = 1; s <= 5; s++) { const e = validate(s); if (e) { go(s); setError(e); return; } }
+    for (let s = 1; s <= 5; s++) { const e = validate(s); if (e) { go(s); fail(s, e); return; } }
     setBusy(true);
     const body = {
       dealType: d.dealType, category: d.category, title: d.title, price: d.price, description: d.description,
@@ -117,15 +125,27 @@ function Wizard({ user }: { user: User }) {
   const Step = [StepCategory, StepDetails, StepPhotos, StepTour, StepLocation, StepContact, StepPublish][step];
   return (
     <div className="wizard">
-      <h1>Зар нэмэх</h1>
-      <div className="steps">
-        {STEP_NAMES.map((n, i) => (
-          <button key={n} className={i === step ? 'on' : i < step ? 'done' : ''}
-            onClick={() => { if (i <= step) go(i); else next(); }}>{i + 1}. {n}</button>
-        ))}
+      <div className="wiz-head">
+        <h1>Зар нэмэх</h1>
+        <span className="wiz-count">Алхам {step + 1} / {STEP_NAMES.length}</span>
       </div>
-      <div className="panel"><Step d={d} setD={setD} toast={toast} user={user} /></div>
-      {error && <div className="error-box" style={{ marginTop: 12 }}>{error}</div>}
+      <ol className="wsteps" aria-label="Зар нэмэх алхамууд">
+        {STEP_NAMES.map((n, i) => {
+          const state = i === step ? 'on' : i < step ? 'done' : '';
+          return (
+            <li key={n} className={state}>
+              <button type="button" aria-current={i === step ? 'step' : undefined}
+                onClick={() => { if (i <= step) go(i); else if (i === step + 1) next(); }}
+                disabled={i > step + 1} title={i > step + 1 ? 'Өмнөх алхмуудаа эхлээд бөглөнө үү' : undefined}>
+                <span className="dot">{i < step ? '✓' : i + 1}</span>
+                <span className="lbl">{n}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="panel"><Step d={d} setD={setD} toast={toast} user={user} tried={!!tried[step]} /></div>
+      {error && !(step === 1 && !validate(1)) && <div className="error-box" role="alert" style={{ marginTop: 12 }}>{error}</div>}
       <div className="wizard-nav">
         <button className="btn" disabled={step === 0} onClick={() => go(step - 1)}>‹ Буцах</button>
         {step < STEP_NAMES.length - 1
@@ -136,51 +156,176 @@ function Wizard({ user }: { user: User }) {
   );
 }
 
-type StepProps = { d: Draft; setD: SetDraft; toast: (m: string) => void; user: User };
+type StepProps = { d: Draft; setD: SetDraft; toast: (m: string) => void; user: User; tried: boolean };
 
 /* ---------- 1. category ---------- */
+const DEALS: { key: DealType; name: string; hint: string }[] = [
+  { key: 'sale', name: 'Зарна', hint: 'Үл хөдлөх хөрөнгөө худалдана' },
+  { key: 'rent', name: 'Түрээслүүлнэ', hint: 'Сар, жилээр түрээсэд гаргана' },
+];
+const CAT_HINTS: Record<Category, string> = {
+  apartment: 'Байр, студи, пентхаус',
+  house: 'Хашаатай байшин, амины сууц',
+  land: 'Өмчийн болон эзэмшлийн газар',
+  office: 'Ажлын өрөө, бизнес төв',
+  shop: 'Дэлгүүр, салон, ресторан',
+  warehouse: 'Агуулах, үйлдвэрийн байр',
+  garage: 'Дулаан гараж, авто зоорь',
+  summer_house: 'Хотын захын амралтын байшин',
+};
+
 function StepCategory({ d, setD }: StepProps) {
   return (
     <>
-      <h2 style={{ marginTop: 0 }}>Юу оруулах вэ?</h2>
-      <div className="seg" style={{ marginBottom: 14 }}>
-        {(['sale', 'rent'] as const).map((t) => (
-          <button key={t} className={d.dealType === t ? 'on' : ''} onClick={() => setD((x) => ({ ...x, dealType: t }))}>{t === 'sale' ? 'Зарна' : 'Түрээслүүлнэ'}</button>
-        ))}
-      </div>
-      <div className="tiles">
-        {CAT_KEYS.map((k) => (
-          <button key={k} className={`tile ${d.category === k ? 'on' : ''}`} onClick={() => setD((x) => ({ ...x, category: k }))}>
-            <div style={{ fontSize: 24 }}>{CATS[k].ico}</div>{CATS[k].name}
-          </button>
-        ))}
+      <h2 className="wiz-title">Ямар зар оруулах вэ?</h2>
+      <p className="muted wiz-sub">Доорх 2 асуултад хариулаад «Дараах» товчийг дарна уу.</p>
+
+      <fieldset className="wq">
+        <legend><span className="wq-n">1</span>Зарах уу, түрээслүүлэх үү?</legend>
+        <div className="choice-row" role="radiogroup">
+          {DEALS.map((t) => {
+            const on = d.dealType === t.key;
+            return (
+              <button key={t.key} type="button" role="radio" aria-checked={on} className={`choice ${on ? 'on' : ''}`}
+                onClick={() => setD((x) => ({ ...x, dealType: t.key }))}>
+                <span className="radio" aria-hidden="true" />
+                <span><b>{t.name}</b><small>{t.hint}</small></span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <fieldset className="wq">
+        <legend><span className="wq-n">2</span>Үл хөдлөх хөрөнгийн төрөл</legend>
+        <div className="ptype-grid" role="radiogroup">
+          {CAT_KEYS.map((k) => {
+            const on = d.category === k;
+            return (
+              <button key={k} type="button" role="radio" aria-checked={on} className={`ptype ${on ? 'on' : ''}`}
+                onClick={() => setD((x) => ({ ...x, category: k }))}>
+                <span className="ico"><CatIcon cat={k} size={26} /></span>
+                <b>{CATS[k].name}</b>
+                <small>{CAT_HINTS[k]}</small>
+                {on && <span className="check" aria-hidden="true">✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <div className="wiz-summary" aria-live="polite">
+        Таны сонголт: <b>{CATS[d.category].name}</b> — <b>{d.dealType === 'rent' ? 'түрээслүүлнэ' : 'зарна'}</b>
       </div>
     </>
   );
 }
 
 /* ---------- 2. details ---------- */
-function StepDetails({ d, setD }: StepProps) {
+/* Validation for step 2. Errors block "Дараах"; warnings only ask the user to double-check (a typo in the price is
+   the most common mistake: per-m² far outside what Ulaanbaatar sees). Ranges match what createListing keeps, so a
+   value is never silently dropped on save. */
+type DetailKey = 'title' | 'price' | 'paymentTerms' | FieldKey;
+type Issues = Partial<Record<DetailKey, string>>;
+const THIS_YEAR = new Date().getFullYear();
+const TITLE_MIN = 10;
+// [min, max, whole number?] for the numeric fields
+const RANGES: Partial<Record<FieldKey, [number, number, boolean]>> = {
+  area: [1, 10_000_000, false], rooms: [1, 50, true], floor: [-3, 200, true], buildingFloors: [1, 200, true],
+  yearInUse: [1900, THIS_YEAR + 5, true], balconies: [0, 20, true], windowCount: [0, 200, true],
+};
+
+function detailIssues(d: Draft): { errors: Issues; warnings: Issues } {
+  const errors: Issues = {}, warnings: Issues = {};
+  const rent = d.dealType === 'rent';
+  const fields = FIELDS_BY_CAT[d.category];
+  const val = (k: FieldKey) => (fields.includes(k) ? (d.fields[k] ?? '').trim() : '');
+
+  const title = d.title.trim();
+  if (!title) errors.title = 'Гарчиг оруулна уу.';
+  else if (title.length < TITLE_MIN) errors.title = `Гарчиг хамгийн багадаа ${TITLE_MIN} тэмдэгт байна (одоо ${title.length}). Байршил, өрөө, талбайг дурдвал зүгээр.`;
+  else if (!/\p{L}{2}/u.test(title)) errors.title = 'Гарчигт тоо биш, үг бичнэ үү.';
+
+  const price = Number(d.price);
+  if (!d.price.trim()) errors.price = 'Үнэ оруулна уу.';
+  else if (!Number.isInteger(price) || price <= 0) errors.price = 'Үнийг төгрөгөөр, бүхэл тоогоор оруулна уу.';
+  else if (price < (rent ? 10_000 : 100_000)) errors.price = rent ? 'Сарын түрээс хамгийн багадаа 10 000₮.' : 'Үнэ хэт бага байна. Бүтэн дүнгээр оруулна уу (жишээ нь 320000000).';
+  else if (price > 1e13) errors.price = 'Үнэ хэт их байна.';
+
+  for (const k of fields) {
+    const raw = val(k), range = RANGES[k];
+    if (!raw) { if (FIELD_DEFS[k].req) errors[k] = `${FIELD_DEFS[k].label.replace(/ \(.*\)/, '')} оруулна уу.`; continue; }
+    if (!range) continue;
+    const [min, max, int] = range, n = Number(raw);
+    if (!Number.isFinite(n) || (int && !Number.isInteger(n)) || n < min || n > max)
+      errors[k] = k === 'yearInUse' ? `${min}–${max} оны хооронд оруулна уу.` : `${min}–${max.toLocaleString('mn-MN')} хооронд ${int ? 'бүхэл ' : ''}тоо оруулна уу.`;
+  }
+  const floor = Number(val('floor')), bf = Number(val('buildingFloors'));
+  if (val('floor') && val('buildingFloors') && !errors.floor && !errors.buildingFloors && floor > bf)
+    errors.floor = `Барилга ${bf} давхар тул ${bf}-аас дээш байж болохгүй.`;
+
+  if (!rent && d.paymentTerms.length === 0) errors.paymentTerms = 'Дор хаяж нэг төлбөрийн нөхцөл сонгоно уу.';
+
+  // sanity check on price per m² (land and warehouses vary too much to judge)
+  const area = Number(val('area'));
+  if (!errors.price && !errors.area && area > 0 && price > 0 && d.category !== 'land' && d.category !== 'warehouse') {
+    const ppm = price / area;
+    const [lo, hi] = rent ? [3_000, 300_000] : [500_000, 30_000_000];
+    if (ppm < lo || ppm > hi)
+      warnings.price = `м² тутамд ${fmtFull(ppm)} гарч байна — ${ppm < lo ? 'хэт бага' : 'хэт өндөр'}. Үнэ, талбайгаа зөв оруулсан эсэхээ шалгана уу.`;
+  }
+  if (!errors.area && d.category === 'apartment' && area > 1000) warnings.area = 'Орон сууцад их талбай байна. Зөв эсэхийг шалгана уу.';
+  return { errors, warnings };
+}
+
+/** Field wrapper: label, control, and the error (or warning) under it, linked for screen readers. */
+function Field({ id, label, req, error, warning, children }: {
+  id: string; label: string; req?: boolean; error?: string; warning?: string; children: React.ReactElement<Record<string, unknown>>;
+}) {
+  const msg = error || warning;
+  return (
+    <label className={`field ${error ? 'invalid' : warning ? 'warn' : ''}`}>
+      <span>{label}{req && ' *'}</span>
+      {cloneElement(children, { 'aria-invalid': !!error, 'aria-describedby': msg ? `${id}-msg` : undefined })}
+      {msg && <small id={`${id}-msg`} className={error ? 'field-err' : 'field-warn'}>{msg}</small>}
+    </label>
+  );
+}
+const noExp = (e: React.KeyboardEvent<HTMLInputElement>) => { if (['e', 'E', '+'].includes(e.key)) e.preventDefault(); };
+
+function StepDetails({ d, setD, tried }: StepProps) {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
   const setField = (k: FieldKey, v: string) => setD((x) => ({ ...x, fields: { ...x.fields, [k]: v } }));
+  // a field shows its error once the user has left it, or after they pressed "Дараах"
+  const [touched, setTouched] = useState<Partial<Record<DetailKey, boolean>>>({});
+  const touch = (k: DetailKey) => () => setTouched((t) => (t[k] ? t : { ...t, [k]: true }));
+  const { errors, warnings } = detailIssues(d);
+  const err = (k: DetailKey) => (tried || touched[k] ? errors[k] : undefined);
+  const warn = (k: DetailKey) => (tried || touched[k] ? warnings[k] : undefined);
   const p = Number(d.price), a = Number(d.fields.area);
   return (
     <>
       <h2 style={{ marginTop: 0 }}>{CATS[d.category].name} — {d.dealType === 'rent' ? 'түрээслүүлнэ' : 'зарна'}</h2>
-      <label className="field"><span>Гарчиг *</span>
-        <input type="text" maxLength={120} value={d.title} onChange={(e) => set('title', e.target.value)} placeholder="Жишээ нь: Хан-Уул, 3 өрөө, 85м², шинэ байр" /></label>
-      <label className="field"><span>Үнэ (₮) {d.dealType === 'rent' && '— сарын'} *</span>
-        <input type="number" min={0} value={d.price} onChange={(e) => set('price', e.target.value)} placeholder="320000000" /></label>
-      <div className="muted small" style={{ margin: '-8px 0 12px' }}>{p > 0 && `${fmtPrice(p)}${a > 0 ? ` · м² — ${fmtFull(p / a)}` : ''}`}</div>
+      <p className="muted small" style={{ margin: '-6px 0 16px' }}>* тэмдэгтэй талбарыг заавал бөглөнө.</p>
+      <Field id="title" label="Гарчиг" req error={err('title')}>
+        <input type="text" maxLength={120} value={d.title} onChange={(e) => set('title', e.target.value)} onBlur={touch('title')}
+          placeholder="Жишээ нь: Хан-Уул, 3 өрөө, 85м², шинэ байр" />
+      </Field>
+      <Field id="price" label={`Үнэ (₮)${d.dealType === 'rent' ? ' — сарын' : ''}`} req error={err('price')} warning={warn('price')}>
+        <input type="number" inputMode="numeric" min={0} step={1} value={d.price} onChange={(e) => set('price', e.target.value)} onBlur={touch('price')}
+          onKeyDown={noExp} placeholder="320000000" />
+      </Field>
+      {p > 0 && <div className="muted small" style={{ margin: '-6px 0 12px' }}>{fmtPrice(p)}{a > 0 && ` · м² — ${fmtFull(p / a)}`}</div>}
       <div className="grid-fields">
         {FIELDS_BY_CAT[d.category].map((k) => {
-          const def = FIELD_DEFS[k];
+          const def = FIELD_DEFS[k], range = RANGES[k];
           return (
-            <label className="field" key={k}><span>{def.label}{def.req && ' *'}</span>
+            <Field key={k} id={k} label={def.label} req={def.req} error={err(k)} warning={warn(k)}>
               {def.type === 'select'
                 ? <select value={d.fields[k] || ''} onChange={(e) => setField(k, e.target.value)}><option value="">—</option>{def.options!.map((o) => <option key={o}>{o}</option>)}</select>
-                : <input type="number" min={0} step="any" value={d.fields[k] || ''} onChange={(e) => setField(k, e.target.value)} />}
-            </label>
+                : <input type="number" inputMode={range?.[2] ? 'numeric' : 'decimal'} min={range?.[0]} max={range?.[1]} step={range?.[2] ? 1 : 'any'}
+                    value={d.fields[k] || ''} onChange={(e) => setField(k, e.target.value)} onBlur={touch(k)} onKeyDown={noExp} />}
+            </Field>
           );
         })}
       </div>
@@ -188,16 +333,22 @@ function StepDetails({ d, setD }: StepProps) {
         {d.category !== 'land' && <label className="check"><input type="checkbox" checked={d.garage} onChange={(e) => set('garage', e.target.checked)} /> Гаражтай</label>}
         <label className="check"><input type="checkbox" checked={d.leasing} onChange={(e) => set('leasing', e.target.checked)} /> Лизингээр авах боломжтой</label>
       </div>
-      <div className="field"><span className="muted small" style={{ fontWeight: 600 }}>Төлбөрийн нөхцөл</span>
+      <div className={`field ${err('paymentTerms') ? 'invalid' : ''}`} role="group" aria-labelledby="pay-lbl" style={{ marginBottom: 16 }}>
+        <span id="pay-lbl" className="muted small" style={{ fontWeight: 600 }}>Төлбөрийн нөхцөл{d.dealType === 'sale' && ' *'}</span>
         <div className="chips" style={{ marginTop: 4 }}>
-          {PAY_TERMS.map((t) => (
-            <button type="button" key={t} className={`chip ${d.paymentTerms.includes(t) ? 'on' : ''}`}
-              onClick={() => set('paymentTerms', d.paymentTerms.includes(t) ? d.paymentTerms.filter((x) => x !== t) : [...d.paymentTerms, t])}>{t}</button>
-          ))}
+          {PAY_TERMS.map((t) => {
+            const on = d.paymentTerms.includes(t);
+            return (
+              <button type="button" key={t} className={`chip ${on ? 'on' : ''}`} aria-pressed={on}
+                onClick={() => { touch('paymentTerms')(); set('paymentTerms', on ? d.paymentTerms.filter((x) => x !== t) : [...d.paymentTerms, t]); }}>{t}</button>
+            );
+          })}
         </div>
+        {err('paymentTerms') && <small className="field-err">{err('paymentTerms')}</small>}
       </div>
       <label className="field"><span>Дэлгэрэнгүй тайлбар</span>
-        <textarea maxLength={5000} value={d.description} onChange={(e) => set('description', e.target.value)} placeholder="Байрны онцлог, ойр орчмын үйлчилгээ, засвар..." /></label>
+        <textarea maxLength={5000} value={d.description} onChange={(e) => set('description', e.target.value)} placeholder="Байрны онцлог, ойр орчмын үйлчилгээ, засвар..." />
+        <small className="muted" style={{ display: 'block', textAlign: 'right' }}>{d.description.length} / 5000</small></label>
     </>
   );
 }

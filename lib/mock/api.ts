@@ -228,36 +228,22 @@ export async function reportListing(id: string, reason: string, note = ''): Prom
   });
 }
 
-/* ---------- auth ---------- */
-export async function getMe(): Promise<User | null> {
-  return read((db) => { const u = me(db); return u ? publicUser(u) : null; });
-}
-
-export async function login(email: string, password: string): Promise<User> {
-  return write((db) => {
-    const e = normEmail(email);
-    if (!validEmail(e)) fail('Имэйл хаягаа зөв оруулна уу');
-    const u = db.users.find((x) => x.email === e);
-    if (!u || u.password !== password) fail('Имэйл эсвэл нууц үг буруу');
-    if (!u!.active) fail('Таны эрх идэвхгүй болсон байна. Админд хандана уу.');
-    db.sessionUserId = u!.id;
-    return publicUser(u!);
-  });
-}
-
-export async function logout(): Promise<void> {
-  await write((db) => { db.sessionUserId = null; });
-}
-
-export async function changePassword(current: string, next: string): Promise<User> {
-  return write((db) => {
-    const u = me(db) ?? fail('Нэвтэрнэ үү');
-    if (u.password !== current) fail('Одоогийн нууц үг буруу');
-    if (!validPassword(next)) fail('Шинэ нууц үг хамгийн багадаа 8 тэмдэгт байна');
-    if (next === current) fail('Шинэ нууц үг хуучнаасаа өөр байх ёстой');
-    u.password = next;
-    u.mustChangePassword = false;
-    return publicUser(u);
+/* ---------- auth ----------
+   Sign-in itself is real now (lib/api/auth.ts → listing-server). Listings, "my ads" and the admin panel
+   still run on this mock DB, which needs to know who is signed in: AuthProvider mirrors the real session
+   here. The agent is matched by email (so a real agent@… keeps the demo listings it owns), otherwise
+   added. Remove this once those features call the API too. */
+export async function mirrorSession(user: User | null): Promise<void> {
+  await write((db) => {
+    if (!user) { db.sessionUserId = null; return; }
+    const email = normEmail(user.email);
+    let u = db.users.find((x) => x.email === email);
+    if (!u) {
+      u = { ...user, id: `api-${user.id}`, email, password: '' };
+      db.users.push(u);
+    }
+    Object.assign(u, { name: user.name, phone: user.phone, role: user.role, active: user.active, mustChangePassword: user.mustChangePassword });
+    db.sessionUserId = u.id;
   });
 }
 

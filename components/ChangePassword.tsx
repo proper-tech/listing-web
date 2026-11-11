@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { changePassword } from '@/lib/mock/api';
+import { changePassword } from '@/lib/api/auth';
 import { useAuth } from './Auth';
 import { useToast } from './Toast';
 
@@ -22,7 +22,7 @@ export default function ChangePassword({ next, forced }: { next: string; forced:
     setBusy(true); setError('');
     try {
       const user = await changePassword(String(f.get('current') || ''), nextPw);
-      setUser(user);
+      await setUser(user);
       toast('Нууц үг солигдлоо');
       form.reset();
       if (forced) router.replace(next);

@@ -5,7 +5,7 @@ import type { Role } from '@/lib/types';
 import { homeFor } from '@/lib/session';
 import { useAuth } from './Auth';
 
-/** Client-side page guard (the mock backend lives in the browser, so there is no server session). */
+/** Client-side page guard: the session is an API cookie the browser holds, checked via /api/auth/me in AuthProvider. */
 export default function RequireUser({ roles, path, children }: { roles: Role[]; path: string; children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading } = useAuth();

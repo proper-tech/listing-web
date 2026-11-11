@@ -76,12 +76,6 @@ const ROWS: SeedRow[] = [
 
 export const DEMO_AGENT_ID = 'u-demo-agent';
 
-/** Demo accounts, shown on the login page. */
-export const DEMO_LOGINS = [
-  { role: 'Админ', email: 'admin@example.com', password: 'admin1234' },
-  { role: 'Агент', email: 'agent@example.com', password: 'agent1234' },
-];
-
 export function seedListings(t = Date.now()): StoredListing[] {
   return ROWS.map((o) => {
     const [lat, lng] = CENTERS[o.district];
