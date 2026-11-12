@@ -881,3 +881,27 @@ html::-webkit-scrollbar-corner, .filters::-webkit-scrollbar-corner { background:
 /* Нарийвчилсан хэсэг: "Шүүлтүүр цэвэрлэх" товчийг доод мөрөнд баруун талд */
 .fbar-adv .ff-end { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; margin-top: -6px; }
 .fbar-adv .ff-end .flink { height: 32px; }
+
+/* Page loader (components/PageLoader.tsx, app/loading.tsx): the gold emblem with a light sweep across it,
+   breathing gently, over the wordmark and a running brass line. Fades in after .2s so quick loads don't flash. */
+.page-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+               min-height: min(56vh, 520px); padding: 48px 0; animation: fade .4s .2s both; }
+.pl-mark { width: 64px; height: 68px; flex: none;
+           background: linear-gradient(110deg, var(--gold-700) 0%, var(--gold-500) 38%, #fff3cf 50%, var(--gold-500) 62%, var(--gold-700) 100%);
+           background-size: 300% 100%;
+           -webkit-mask: url(/logos/mark.png) center / contain no-repeat; mask: url(/logos/mark.png) center / contain no-repeat;
+           animation: pl-shine 1.9s cubic-bezier(.45,.05,.35,1) infinite, pl-breathe 2.8s ease-in-out infinite; }
+.pl-word { font-family: var(--display); font-weight: 700; font-size: 19px; letter-spacing: -.01em; color: var(--text); }
+.pl-word i { color: var(--brand-text); font-style: normal; }
+.pl-line { position: relative; width: 112px; height: 2px; overflow: hidden; background: var(--line); }
+.pl-line::after { content: ""; position: absolute; inset: 0; width: 40%; background: var(--gold-grad);
+                  animation: pl-run 1.4s cubic-bezier(.65,0,.35,1) infinite; }
+.pl-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@keyframes pl-shine { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+@keyframes pl-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+@keyframes pl-run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@media (prefers-reduced-motion: reduce) {
+  .pl-mark, .pl-line::after { animation: none; }
+  .pl-mark { background: linear-gradient(160deg, var(--gold-500), var(--gold-700)); }
+  .pl-line::after { width: 100%; opacity: .6; }
+}

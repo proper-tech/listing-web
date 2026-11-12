@@ -7,6 +7,7 @@ import { fmtFloor } from '@/lib/format';
 import { store } from '@/lib/store';
 import { Grid } from './ListingCard';
 import { ResultsMap } from './Maps';
+import PageLoader from '@/components/PageLoader';
 
 // Давхрын сонголт: подвал B3–B1, дараа нь 1–40 (сөрөг тоо дотооддоо подвалыг илэрхийлнэ).
 const FLOORS = [-3, -2, -1, ...Array.from({ length: 40 }, (_, i) => i + 1)];
@@ -210,7 +211,7 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
 
       <p className="fresult">{result ? <><b>{res.total}</b> зар олдлоо</> : 'Хайж байна…'}</p>
 
-      {!result ? <div className="loading">Ачаалж байна…</div> : view === 'list' ? (
+      {!result ? <PageLoader /> : view === 'list' ? (
         <>
           <Grid items={res.items} empty="Тохирох зар олдсонгүй. " />
           {pages > 1 && (

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { normPhone, sendInquiry } from '@/lib/mock/api';
+import { normPhone, sendInquiry } from '@/lib/api/inquiries';
 import { useToast } from './Toast';
 
 // Нэр: зөвхөн үсэг (кирилл, латин), зай, зураас. Утас: зөвхөн 8 цифр.

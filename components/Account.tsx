@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation';
 import { homeFor } from '@/lib/session';
 import { useAuth } from './Auth';
 import ChangePassword from './ChangePassword';
+import PageLoader from '@/components/PageLoader';
 
 export default function Account({ next }: { next: string }) {
   const router = useRouter();
   const { user, loading } = useAuth();
   useEffect(() => { if (!loading && !user) router.replace('/login?next=/account'); }, [loading, user, router]);
-  if (!user) return <div className="loading">Ачаалж байна…</div>;
+  if (!user) return <PageLoader />;
   return (
     <div className="panel auth-card">
       <h1>Миний бүртгэл</h1>

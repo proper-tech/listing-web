@@ -8,6 +8,7 @@ import { Grid } from './ListingCard';
 import HeroSearch from './HeroSearch';
 import CatIcon from './CatIcon';
 import HeroVideo from './HeroVideo';
+import PageLoader from '@/components/PageLoader';
 
 type Data = { stats: Stats; top: SearchResult; fresh: SearchResult; tours: SearchResult };
 type Deal = 'sale' | 'rent';
@@ -87,7 +88,7 @@ export default function HomeClient() {
           })}
         </div>
       </section>
-      {!data ? <div className="loading">Ачаалж байна…</div> : <>
+      {!data ? <PageLoader /> : <>
         {data.top.items.length > 0 && (
           <section className="block">
             <div className="section-head">

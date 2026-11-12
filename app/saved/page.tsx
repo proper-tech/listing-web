@@ -7,6 +7,7 @@ import type { Listing } from '@/lib/types';
 import { CATS } from '@/lib/constants';
 import { fmtFull } from '@/lib/format';
 import { Grid, Price } from '@/components/ListingCard';
+import PageLoader from '@/components/PageLoader';
 
 const ROWS: [string, (l: Listing) => React.ReactNode][] = [
   ['Үнэ', (l) => <Price l={l} />], ['м² үнэ', (l) => (l.pricePerM2 ? fmtFull(l.pricePerM2) : '—')], ['Ангилал', (l) => CATS[l.category].name],
@@ -26,7 +27,7 @@ export default function SavedPage() {
     return () => { stale = true; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!items) return <div className="loading">Ачаалж байна…</div>;
+  if (!items) return <PageLoader />;
   if (!items.length) return <><h1 style={{ marginTop: 20 }}>Хадгалсан зар</h1><div className="empty">Хадгалсан зар алга.</div></>;
   const cmp = items.slice(0, 4);
   return (

@@ -10,6 +10,7 @@ import { fmtDate, fmtPrice } from '@/lib/format';
 import { Price } from './ListingCard';
 import { useToast } from './Toast';
 import { useAuth } from './Auth';
+import PageLoader from '@/components/PageLoader';
 
 type Tab = 'pending' | 'reported' | 'active' | 'all' | 'agents';
 const TAB_NAMES: Record<Tab, string> = { pending: 'Хянах', reported: 'Мэдээлэгдсэн', active: 'Идэвхтэй', all: 'Бүх зар', agents: 'Агентууд' };
@@ -34,7 +35,7 @@ export default function AdminPanel() {
   }, [toast]);
   useEffect(() => { load(); }, [load]);
 
-  if (!data) return <div className="loading">Ачаалж байна…</div>;
+  if (!data) return <PageLoader />;
 
   const groups: Record<Exclude<Tab, 'agents'>, AdminListing[]> = {
     pending: data.items.filter((l) => l.status === 'pending'),

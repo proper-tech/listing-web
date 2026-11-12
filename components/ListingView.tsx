@@ -11,6 +11,7 @@ import { PhoneAndFav, ReportButton } from './ListingActions';
 import InquiryForm from './InquiryForm';
 import { MiniMap } from './Maps';
 import { useAuth } from './Auth';
+import PageLoader from '@/components/PageLoader';
 
 export default function ListingView({ id, startWithTour }: { id: string; startWithTour: boolean }) {
   const { user, loading: authLoading } = useAuth();
@@ -38,7 +39,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
 
   useEffect(() => { if (l && l !== 'missing') document.title = `${l.title} — ProperTech`; }, [l]);
 
-  if (!l) return <div className="loading">Ачаалж байна…</div>;
+  if (!l) return <PageLoader />;
   if (l === 'missing') return <div className="empty">Зар олдсонгүй. <Link href="/">Нүүр хуудас</Link></div>;
 
   const specs: [string, string | number | undefined | null | false][] = [

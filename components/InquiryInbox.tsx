@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { markInquiryRead, myInquiries } from '@/lib/mock/api';
+import { markInquiryRead, myInquiries } from '@/lib/api/inquiries';
 import type { InquiryWithListing } from '@/lib/types';
 import { timeAgo } from '@/lib/format';
+import PageLoader from '@/components/PageLoader';
 
 /** "Миний зар" хуудсан дээр: зарууд руу ирсэн холбоо барих хүсэлтүүд. */
 export default function InquiryInbox() {
@@ -26,7 +27,7 @@ export default function InquiryInbox() {
       <div className="section-head" style={{ marginTop: 32 }}>
         <h2>Ирсэн хүсэлтүүд {unread > 0 && <span className="inbox-badge">{unread} шинэ</span>}</h2>
       </div>
-      {!items ? <div className="loading">Ачаалж байна…</div> : !items.length ? (
+      {!items ? <PageLoader /> : !items.length ? (
         <div className="empty">Одоогоор хүсэлт ирээгүй байна. Худалдан авагчид зарын хуудсан дээрх формоор тантай холбогдоно.</div>
       ) : (
         <ul className="inbox-list">

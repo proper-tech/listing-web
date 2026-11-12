@@ -9,6 +9,7 @@ import { Price } from './ListingCard';
 import { useToast } from './Toast';
 import { useAuth } from './Auth';
 import InquiryInbox from './InquiryInbox';
+import PageLoader from '@/components/PageLoader';
 
 const MSG: Record<OwnerAction, string> = { sold: 'Зарагдсан гэж тэмдэглэлээ', archive: 'Архивлалаа — нийтэд харагдахгүй', restore: 'Сэргээлээ', delete: 'Устгалаа' };
 
@@ -34,7 +35,7 @@ export default function MyAds() {
     <>
       <div className="section-head" style={{ marginTop: 20 }}><h1>Миний зар</h1><Link className="btn btn-primary" href="/post">+ Зар нэмэх</Link></div>
       {user && <p className="muted small">{user.name} · {user.role === 'admin' ? 'Админ' : 'Агент'}. Таны оруулсан зарууд энд харагдана; агентын зар админ баталсны дараа нийтлэгдэнэ.</p>}
-      {!items ? <div className="loading">Ачаалж байна…</div> : !items.length ? <div className="empty">Та одоогоор зар оруулаагүй байна.</div> : (
+      {!items ? <PageLoader /> : !items.length ? <div className="empty">Та одоогоор зар оруулаагүй байна.</div> : (
         <div style={{ overflowX: 'auto' }}><table className="admin-table"><tbody>
           <tr><th /><th>Зар</th><th>Төлөв</th><th>Үзсэн</th><th>Оруулсан</th><th /></tr>
           {items.map((l) => (
