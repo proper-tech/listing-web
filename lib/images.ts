@@ -1,5 +1,5 @@
 'use client';
-import { uploadImage } from './mock/api';
+import { uploadImage } from './api/listings';
 
 export async function loadBitmap(file: Blob): Promise<ImageBitmap> {
   try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch { return await createImageBitmap(file); }
@@ -20,7 +20,7 @@ export async function resizeImage(file: Blob, maxW: number) {
   return out;
 }
 
-/** Mock upload: no server, the image is kept as a data: URL (see lib/mock/api.ts). */
+/** Uploads to R2 via POST /api/uploads; resolves to the image URL. */
 export const upload = uploadImage;
 
 // Load a classic <script> once (used for Pannellum, which has no ES module build).

@@ -3,7 +3,7 @@
 `real-estate-platform-plan.md`-ийн дагуу хийсэн ажиллах прототип: Phase 1 бүхэлдээ, Phase 2-оос 360° хэсэг.
 
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
-- **Backend:** нэвтрэлт нь жинхэнэ API ([`listing-server`](../listing-server), [`lib/api/auth.ts`](lib/api/auth.ts)). Бусад өгөгдөл одоохондоо **mock** ([`lib/mock/`](lib/mock)).
+- **Backend:** [`listing-server`](../listing-server) API — нэвтрэлт ([`lib/api/auth.ts`](lib/api/auth.ts)), зар, зураг ([`lib/api/listings.ts`](lib/api/listings.ts)). Админ самбарын агент удирдлага, зарын гомдол одоохондоо **mock** ([`lib/mock/`](lib/mock)).
 
 ## Ажиллуулах
 

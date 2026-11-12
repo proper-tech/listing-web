@@ -1,6 +1,6 @@
 export type Category = 'apartment' | 'house' | 'land' | 'office' | 'shop' | 'warehouse' | 'garage' | 'summer_house';
 export type DealType = 'sale' | 'rent';
-export type ListingStatus = 'draft' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected';
+export type ListingStatus = 'draft' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected' | 'archived';
 export type Placement = 'free' | 'vip' | 'top';
 export type SellerType = 'owner' | 'agent' | 'company';
 
@@ -57,7 +57,8 @@ export interface Listing {
   status: ListingStatus;
   views: number;
   createdAt: string;
-  expiresAt: string;
+  /** mock data only; the API has no expiry */
+  expiresAt?: string;
   /** computed by the API */
   hasTour: boolean;
   /** 2 = top, 1 = vip, 0 = none (only while the placement is paid up) */

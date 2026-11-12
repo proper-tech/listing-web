@@ -6,7 +6,7 @@ import {
   CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, ROOM_NAMES, type FieldKey,
 } from '@/lib/constants';
 import { fmtFull, fmtPrice } from '@/lib/format';
-import { createListing } from '@/lib/mock/api';
+import { createListing } from '@/lib/api/listings';
 import { useAuth } from './Auth';
 import { canvasToBlob, resizeImage, upload } from '@/lib/images';
 import { getPannellum, type PannellumViewer } from '@/lib/pannellum';
@@ -365,7 +365,7 @@ function StepPhotos({ d, setD, toast }: StepProps) {
     for (const { file, photo } of entries) {
       try {
         const r = await resizeImage(file, 1600);
-        updPhoto(photo.key, { src: await upload(r.blob), width: r.width, height: r.height, uploading: false });
+        updPhoto(photo.key, { src: await upload(r.blob, true), width: r.width, height: r.height, uploading: false });
       } catch (err) { toast((err as Error).message); updPhoto(photo.key, null); }
     }
   }

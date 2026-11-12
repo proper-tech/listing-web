@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { adminCreateUser, adminListings, adminUpdateListing, adminUpdateUser, adminUsers, resetMockData } from '@/lib/mock/api';
+import { adminListings, adminUpdateListing } from '@/lib/api/listings';
+// agents and reports have no API yet: they still live in the browser's mock store
+import { adminCreateUser, adminUpdateUser, adminUsers, dismissReports, listReports, resetMockData } from '@/lib/mock/api';
 import type { AdminListing, AdminUser, Report } from '@/lib/types';
 import { CATS, NOIMG, PLACEMENTS, STATUS_MN } from '@/lib/constants';
 import { fmtDate, fmtPrice } from '@/lib/format';
@@ -21,11 +23,13 @@ export default function AdminPanel() {
 
   const load = useCallback(async () => {
     try {
-      const [d, u] = await Promise.all([
+      const [items, reports, u] = await Promise.all([
         adminListings(),
-        adminUsers(),
+        listReports(),
+        adminUsers().catch(() => [] as AdminUser[]),
       ]);
-      setData(d); setUsers(u);
+      setData({ items: items.map((l) => ({ ...l, reports: reports.filter((r) => r.listingId === l.id).length })), reports });
+      setUsers(u);
     } catch (e) { toast((e as Error).message); }
   }, [toast]);
   useEffect(() => { load(); }, [load]);
@@ -44,7 +48,11 @@ export default function AdminPanel() {
 
   const act = async (l: AdminListing, body: Parameters<typeof adminUpdateListing>[1], confirmMsg?: string) => {
     if (confirmMsg && !confirm(confirmMsg)) return;
-    try { await adminUpdateListing(l.id, body); toast('Хадгаллаа'); load(); }
+    try {
+      await adminUpdateListing(l.id, body);
+      if (body.action === 'delete' || body.status === 'active') await dismissReports(l.id); // handled
+      toast('Хадгаллаа'); load();
+    }
     catch (e) { toast((e as Error).message); }
   };
 
@@ -53,7 +61,7 @@ export default function AdminPanel() {
       <div className="section-head" style={{ marginTop: 20 }}>
         <h1>Админ самбар</h1>
         <button className="btn btn-sm" onClick={async () => {
-          if (!confirm('Mock өгөгдлийг анхны төлөвт буцаах уу? Нэмсэн зар, агент устна.')) return;
+          if (!confirm('Mock агентууд, мэдээлэгдсэн гомдлыг анхны төлөвт буцаах уу? (Зарууд API-д тул устахгүй.)')) return;
           await resetMockData(); window.location.href = '/';
         }}>Mock өгөгдөл шинэчлэх</button>
       </div>

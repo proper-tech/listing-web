@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Listing } from '@/lib/types';
 import { CATS } from '@/lib/constants';
 import { fmtDate, fmtFloor, fmtFull, timeAgo } from '@/lib/format';
-import { getListing, searchListings } from '@/lib/mock/api';
+import { getListing, searchListings } from '@/lib/api/listings';
 import { Badges, Grid, Price } from './ListingCard';
 import ListingMedia from './ListingMedia';
 import { PhoneAndFav, ReportButton } from './ListingActions';

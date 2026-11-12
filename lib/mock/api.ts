@@ -88,7 +88,7 @@ const promoRank = (l: StoredListing, t = Date.now()) =>
   !l.placementUntil || Date.parse(l.placementUntil) < t ? 0 : l.placement === 'top' ? 2 : l.placement === 'vip' ? 1 : 0;
 const hasTour = (l: Pick<StoredListing, 'tour'>) => !!l.tour?.rooms.some((r) => r.status === 'ready');
 const effStatus = (l: StoredListing): ListingStatus =>
-  l.status === 'active' && Date.parse(l.expiresAt) < Date.now() ? 'expired' : l.status;
+  l.status === 'active' && Date.parse(l.expiresAt ?? "") < Date.now() ? 'expired' : l.status;
 const isLive = (l: StoredListing) => effStatus(l) === 'active';
 
 // Нийтэд харуулах зарт утасны дугаар хэзээ ч гарахгүй байх ёстой.
@@ -224,11 +224,20 @@ export async function getPhone(id: string): Promise<string> {
   });
 }
 
+/* Reports have no API yet: they are kept in this browser's mock store by listing id (real post ids too),
+   and the admin panel reads them back with listReports(). */
 export async function reportListing(id: string, reason: string, note = ''): Promise<void> {
   await write((db) => {
-    const l = findListing(db, id) ?? notFound();
-    db.reports.unshift({ id: randomId(), listingId: l.id, reason: cleanStr(reason, 40) || 'other', note: cleanStr(note, 500), createdAt: new Date().toISOString() });
+    db.reports.unshift({ id: randomId(), listingId: cleanStr(id, 40), reason: cleanStr(reason, 40) || 'other', note: cleanStr(note, 500), createdAt: new Date().toISOString() });
   });
+}
+
+export async function listReports(): Promise<Report[]> {
+  return read((db) => db.reports.slice(0, 500));
+}
+
+export async function dismissReports(listingId: string): Promise<void> {
+  await write((db) => { db.reports = db.reports.filter((r) => r.listingId !== listingId); });
 }
 
 /* ---------- auth ----------

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getListing } from '@/lib/mock/api';
+import { getListing } from '@/lib/api/listings';
 import { useFavs } from '@/lib/store';
 import type { Listing } from '@/lib/types';
 import { CATS } from '@/lib/constants';

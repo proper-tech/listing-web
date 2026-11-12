@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SearchResult } from '@/lib/types';
 import { CATS, CAT_KEYS, DISTRICTS } from '@/lib/constants';
-import { searchListings } from '@/lib/mock/api';
+import { searchListings } from '@/lib/api/listings';
 import { fmtFloor } from '@/lib/format';
 import { store } from '@/lib/store';
 import { Grid } from './ListingCard';

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getPhone, reportListing } from '@/lib/mock/api';
+import { getPhone } from '@/lib/api/listings';
+import { reportListing } from '@/lib/mock/api'; // no reports API yet: kept in this browser for the admin panel
 import { useToast } from './Toast';
 import FavButton from './FavButton';
 

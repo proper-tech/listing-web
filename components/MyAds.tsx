@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { myListings, ownerAction } from '@/lib/mock/api';
+import { myListings, ownerAction, type OwnerAction } from '@/lib/api/listings';
 import type { Listing } from '@/lib/types';
 import { NOIMG, STATUS_MN } from '@/lib/constants';
 import { fmtDate } from '@/lib/format';
@@ -10,7 +10,7 @@ import { useToast } from './Toast';
 import { useAuth } from './Auth';
 import InquiryInbox from './InquiryInbox';
 
-const MSG = { bump: 'Зар дээшиллээ (демо: төлбөргүй)', renew: '30 хоногоор сунгалаа', sold: 'Зарагдсан гэж тэмдэглэлээ', delete: 'Устгалаа' } as const;
+const MSG: Record<OwnerAction, string> = { sold: 'Зарагдсан гэж тэмдэглэлээ', archive: 'Архивлалаа — нийтэд харагдахгүй', restore: 'Сэргээлээ', delete: 'Устгалаа' };
 
 export default function MyAds() {
   const toast = useToast();
@@ -21,11 +21,12 @@ export default function MyAds() {
   }, [toast]);
   useEffect(() => { load(); }, [load]);
 
-  const act = async (l: Listing, action: keyof typeof MSG) => {
+  const isAdmin = user?.role === 'admin';
+  const act = async (l: Listing, action: OwnerAction) => {
     if (action === 'delete' && !confirm('Зарыг бүр мөсөн устгах уу? Буцаах боломжгүй.')) return;
     try {
-      await ownerAction(l.id, action);
-      toast(MSG[action]); load();
+      await ownerAction(l.id, action, isAdmin);
+      toast(action === 'restore' && !isAdmin ? 'Сэргээлээ — админ дахин шалгаад нийтэлнэ' : MSG[action]); load();
     } catch (e) { toast((e as Error).message); }
   };
 
@@ -35,18 +36,21 @@ export default function MyAds() {
       {user && <p className="muted small">{user.name} · {user.role === 'admin' ? 'Админ' : 'Агент'}. Таны оруулсан зарууд энд харагдана; агентын зар админ баталсны дараа нийтлэгдэнэ.</p>}
       {!items ? <div className="loading">Ачаалж байна…</div> : !items.length ? <div className="empty">Та одоогоор зар оруулаагүй байна.</div> : (
         <div style={{ overflowX: 'auto' }}><table className="admin-table"><tbody>
-          <tr><th /><th>Зар</th><th>Төлөв</th><th>Үзсэн</th><th>Дуусах</th><th /></tr>
+          <tr><th /><th>Зар</th><th>Төлөв</th><th>Үзсэн</th><th>Оруулсан</th><th /></tr>
           {items.map((l) => (
             <tr key={l.id}>
               <td><img src={l.photos[0]?.src || NOIMG} alt="" /></td>
               <td><Link href={`/listing/${l.id}`}>{l.title}</Link><div className="muted small"><Price l={l} /> · {l.id}</div></td>
               <td><span className={`badge ${l.status}`}>{STATUS_MN[l.status]}</span></td>
               <td>{l.views}</td>
-              <td>{fmtDate(l.expiresAt)}</td>
+              <td>{fmtDate(l.createdAt)}</td>
               <td style={{ whiteSpace: 'nowrap' }}>
-                <button className="btn btn-sm" onClick={() => act(l, 'bump')}>↑ Дээшлүүлэх</button>{' '}
-                <button className="btn btn-sm" onClick={() => act(l, 'renew')}>Сунгах</button>{' '}
-                <button className="btn btn-sm" onClick={() => act(l, 'sold')}>Зарагдсан</button>{' '}
+                {(l.status === 'archived' || l.status === 'sold')
+                  ? <button className="btn btn-sm" onClick={() => act(l, 'restore')}>Сэргээх</button>
+                  : <>
+                      {l.status === 'active' && <button className="btn btn-sm" onClick={() => act(l, 'sold')}>Зарагдсан</button>}{' '}
+                      <button className="btn btn-sm" onClick={() => act(l, 'archive')}>Архивлах</button>
+                    </>}{' '}
                 <button className="btn btn-sm btn-danger" onClick={() => act(l, 'delete')}>Устгах</button>
               </td>
             </tr>

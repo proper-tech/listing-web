@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { Category, SearchResult, Stats } from '@/lib/types';
 import { CATS, CAT_KEYS } from '@/lib/constants';
-import { getStats, searchListings } from '@/lib/mock/api';
+import { getStats, searchListings } from '@/lib/api/listings';
 import { Grid } from './ListingCard';
 import HeroSearch from './HeroSearch';
 import CatIcon from './CatIcon';
