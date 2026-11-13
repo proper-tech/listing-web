@@ -9,6 +9,7 @@ import HeroSearch from './HeroSearch';
 import CatIcon from './CatIcon';
 import HeroVideo from './HeroVideo';
 import PageLoader from '@/components/PageLoader';
+import LoadError from '@/components/LoadError';
 
 type Data = { stats: Stats; top: SearchResult; fresh: SearchResult; tours: SearchResult };
 type Deal = 'sale' | 'rent';
@@ -31,16 +32,20 @@ const STEPS: { title: string; text: string; icon: React.ReactNode }[] = [
 
 export default function HomeClient() {
   const [data, setData] = useState<Data | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let stale = false;
+    setFailed(false);
     Promise.all([
       getStats(),
       searchListings({ placement: 'top', per: '8' }),
       searchListings({ sort: 'new', plain: '1', per: '12' }),
       searchListings({ tour: '1', per: '4' }),
-    ]).then(([stats, top, fresh, tours]) => { if (!stale) setData({ stats, top, fresh, tours }); });
+    ]).then(([stats, top, fresh, tours]) => { if (!stale) setData({ stats, top, fresh, tours }); })
+      .catch(() => { if (!stale) setFailed(true); });
     return () => { stale = true; };
-  }, []);
+  }, [attempt]);
 
   const [deal, setDeal] = useState<'sale' | 'rent'>('sale');
   const cnt = (d: string, c: string) => data?.stats.counts[`${d}:${c}`] || 0;
@@ -80,7 +85,7 @@ export default function HomeClient() {
                 <span className={`hc-ico ${CAT_ART[k] ? 'has-art' : ''}`}>{CAT_ART[k] ? <img src={CAT_ART[k]} alt="" loading="lazy" /> : <CatIcon cat={k} />}</span>
                 <span className="hc-body">
                   <b>{CATS[k].name}</b>
-                  <small>{data ? (n ? `${n} зар` : 'Зар алга') : '…'}</small>
+                  <small>{data ? (n ? `${n} зар` : 'Зар алга') : failed ? 'Үзэх' : '…'}</small>
                 </span>
                 <span className="hc-arrow" aria-hidden="true">→</span>
               </Link>
@@ -88,7 +93,8 @@ export default function HomeClient() {
           })}
         </div>
       </section>
-      {!data ? <PageLoader /> : <>
+      {failed ? <section className="block"><LoadError message="Зарууд ачаалж чадсангүй." onRetry={() => setAttempt((a) => a + 1)} /></section>
+      : !data ? <PageLoader /> : <>
         {data.top.items.length > 0 && (
           <section className="block">
             <div className="section-head">

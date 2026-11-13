@@ -16,9 +16,9 @@ export interface ApiPost {
   windowCount: number | null; doorType: string | null; garage: boolean; leasing: boolean; paymentTerms: string[];
   tour: Tour | null; sellerName: string; sellerType: SellerType; contactPhone: string;
   placement: Placement; placementUntil: string | null; status: ListingStatus; views: number; createdAt: string;
-  agent: { id: number; name: string; phone: string } | null; images: ApiImage[];
+  agent: { id: number; name: string; phone: string; avatarKey: string | null } | null; images: ApiImage[];
 }
-interface PostList { posts: ApiPost[]; total: number; page: number; limit: number; pages: number }
+interface PostList { posts: ApiPost[]; total: number; page: number; limit: number; pages: number; dealCounts?: { sale: number; rent: number } }
 
 /** `/api/uploads/...` → absolute when the browser talks to the API directly (NEXT_PUBLIC_API_URL). */
 const abs = (url: string) => (url.startsWith('/api/') ? API_BASE_URL + url : url);
@@ -50,6 +50,8 @@ export function toListing(p: ApiPost): Listing {
   return {
     id, title: p.title, description: p.description, dealType: p.dealType, category: p.category,
     sellerName: p.sellerName || p.agent?.name || '', sellerType: p.sellerType,
+    // an 'owner' listing shows the owner's name, so the agent's photo would be the wrong face
+    sellerAvatar: p.sellerType !== 'owner' && p.agent?.avatarKey ? photoUrl(`/api/uploads/${p.agent.avatarKey}`) : undefined,
     price: p.price, area: p.area, pricePerM2: p.area > 0 ? Math.round(p.price / p.area) : undefined,
     rooms: undef(p.rooms), floor: undef(p.floor), buildingFloors: undef(p.totalFloors), yearInUse: undef(p.yearInUse),
     floorMaterial: undef(p.floorMaterial), balconies: undef(p.balconies), windowType: undef(p.windowType),
@@ -62,6 +64,36 @@ export function toListing(p: ApiPost): Listing {
   };
 }
 
+/* ---------- map pins ---------- */
+/** One marker on the search map: just what the pin and its popup show. */
+export interface MapPin {
+  id: string; title: string; price: number; dealType: DealType; district: string;
+  lat: number; lng: number; rooms?: number; area?: number; promo: 0 | 1 | 2; cover: string;
+}
+interface ApiPin {
+  id: number; title: string; price: number; dealType: DealType; category: Category; district: string;
+  lat: number | null; lng: number | null; rooms: number | null; area: number | null; promo: number; cover: string | null;
+}
+export interface PinResult { pins: MapPin[]; total: number; truncated: boolean; dealCounts?: { sale: number; rent: number } }
+
+/** Every match for the map in one light request (GET /api/posts/pins, up to 1000; `truncated` when there are more). */
+export async function searchPins(params: URLSearchParams | Record<string, string>): Promise<PinResult> {
+  const out = toServerQuery(params);
+  out.delete('page'); out.delete('limit'); out.delete('sort');
+  const r = await apiGet<{ pins: ApiPin[]; total: number; truncated: boolean; dealCounts?: { sale: number; rent: number } }>(`/api/posts/pins?${out}`);
+  return {
+    total: r.total, truncated: r.truncated, dealCounts: r.dealCounts,
+    pins: r.pins.map((p) => {
+      const [cLat, cLng] = CENTERS[p.district] ?? UB; // no map pin: the district centre, like the listing page
+      return {
+        id: String(p.id), title: p.title, price: p.price, dealType: p.dealType, district: p.district,
+        lat: p.lat ?? cLat, lng: p.lng ?? cLng, rooms: undef(p.rooms), area: undef(p.area),
+        promo: (p.promo === 2 ? 2 : p.promo === 1 ? 1 : 0), cover: p.cover ? photoUrl(p.cover) : '',
+      };
+    }),
+  };
+}
+
 /* ---------- public listings ---------- */
 // The search page's URL params → the server's query names
 const PARAM_MAP: Record<string, string> = {
@@ -69,11 +101,12 @@ const PARAM_MAP: Record<string, string> = {
   priceMin: 'minPrice', priceMax: 'maxPrice', ppmMin: 'minPpm', ppmMax: 'maxPpm', areaMin: 'minArea', areaMax: 'maxArea',
   floorMin: 'minFloor', floorMax: 'maxFloor', bfMin: 'minTotalFloors', bfMax: 'maxTotalFloors', yearMin: 'minYear', yearMax: 'maxYear',
   notFirst: 'notFirst', notLast: 'notLast', leasing: 'leasing', garage: 'garage', tour: 'hasTour',
-  posted: 'postedDays', seller: 'sellerType', plain: 'plain', page: 'page', per: 'limit',
+  posted: 'postedDays', seller: 'sellerType', plain: 'plain', page: 'page', per: 'limit', facets: 'facets',
 };
 const SORT_MAP: Record<string, string> = { new: 'newest', cheap: 'price_asc', expensive: 'price_desc', ppm2: 'ppm_asc', area: 'area_desc' };
 
-export async function searchListings(params: URLSearchParams | Record<string, string>): Promise<SearchResult> {
+/** The search page's URL params → the server's query (shared by the list and the map pins). */
+function toServerQuery(params: URLSearchParams | Record<string, string>): URLSearchParams {
   const q = params instanceof URLSearchParams ? params : new URLSearchParams(params);
   const out = new URLSearchParams();
   q.forEach((v, k) => {
@@ -94,9 +127,14 @@ export async function searchListings(params: URLSearchParams | Record<string, st
     const picked = (out.get('rooms') || '').split(',').map(Number).filter((r) => plus.includes(r));
     out.set('rooms', (picked.length ? picked : plus).join(','));
   }
+  return out;
+}
+
+export async function searchListings(params: URLSearchParams | Record<string, string>): Promise<SearchResult> {
+  const out = toServerQuery(params);
   if (!out.has('limit')) out.set('limit', '24');
   const r = await apiGet<PostList>(`/api/posts?${out}`);
-  return { total: r.total, page: r.page, per: r.limit, items: r.posts.map(toListing) };
+  return { total: r.total, page: r.page, per: r.limit, items: r.posts.map(toListing), dealCounts: r.dealCounts };
 }
 
 export const getStats = () => apiGet<Stats>('/api/posts/stats');

@@ -2,12 +2,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SearchResult } from '@/lib/types';
 import { CATS, CAT_KEYS, DISTRICTS } from '@/lib/constants';
-import { searchListings } from '@/lib/api/listings';
+import { searchListings, searchPins, type PinResult } from '@/lib/api/listings';
 import { fmtFloor } from '@/lib/format';
 import { store } from '@/lib/store';
 import { Grid } from './ListingCard';
 import { ResultsMap } from './Maps';
 import PageLoader from '@/components/PageLoader';
+import LoadError from '@/components/LoadError';
 
 // Давхрын сонголт: подвал B3–B1, дараа нь 1–40 (сөрөг тоо дотооддоо подвалыг илэрхийлнэ).
 const FLOORS = [-3, -2, -1, ...Array.from({ length: 40 }, (_, i) => i + 1)];
@@ -18,6 +19,18 @@ const ADV_KEYS = ['priceMin', 'priceMax', 'roomsMin', 'rooms', 'areaMin', 'areaM
 const DEALS: { key: '' | 'sale' | 'rent'; label: string }[] = [
   { key: '', label: 'Бүгд' }, { key: 'sale', label: 'Зарна' }, { key: 'rent', label: 'Түрээс' },
 ];
+
+/** Хуудаслалтын товчнууд: 1 … 4 5 6 … 20 (эхний, сүүлийн, одоогийн хөрш). */
+function pageList(page: number, pages: number): (number | '…')[] {
+  const keep = new Set([1, pages, page - 1, page, page + 1].filter((n) => n >= 1 && n <= pages));
+  // ганц алгасах хуудсыг "…" биш тоогоор нь харуулна
+  if (keep.has(3) && !keep.has(2)) keep.add(2);
+  if (keep.has(pages - 2) && !keep.has(pages - 1)) keep.add(pages - 1);
+  const out: (number | '…')[] = [];
+  let prev = 0;
+  for (const n of [...keep].sort((a, b) => a - b)) { if (n - prev > 1) out.push('…'); out.push(n); prev = n; }
+  return out;
+}
 
 /* ---------- жижиг дүрсүүд ---------- */
 const I = {
@@ -57,6 +70,9 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
   const res = result ?? { total: 0, page: 1, per: 24, items: [] };
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
   const [view, setView] = useState<'list' | 'map'>('list');
+  const [pins, setPins] = useState<PinResult | null>(null); // газрын зургийн харагдацын бүх тэмдэг
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0); // "Дахин оролдох" дарахад дахин хайна
   const [advOpen, setAdvOpen] = useState(() => ADV_KEYS.some((k) => new URLSearchParams(initialQuery).get(k)));
   const [formKey, setFormKey] = useState(0); // "цэвэрлэх"-ийн дараа талбаруудыг шинээр зурна
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -66,18 +82,19 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
   // Query эсвэл харагдац өөрчлөгдөх бүрт хайна.
   useEffect(() => {
     const apiQ = new URLSearchParams(q);
-    if (view === 'map') { apiQ.set('per', '60'); apiQ.delete('page'); }
     window.history.replaceState(null, '', '/search' + (q.toString() ? '?' + q : ''));
+    // Таб бүрийн тоог (бусад шүүлтүүр хэвээр) сервер нэг хүсэлтээр буцаана (facets=deal).
+    apiQ.set('facets', 'deal');
     let stale = false;
-    searchListings(apiQ).then((r) => { if (!stale) setRes(r); }).catch(() => {});
-    // Таб бүрийн тоо: бусад шүүлтүүр хэвээр, зөвхөн deal-ийг сольж тоолно.
-    Promise.all(DEALS.map(({ key }) => {
-      const c = new URLSearchParams(q); c.delete('page'); c.set('per', '1');
-      if (key) c.set('deal', key); else c.delete('deal');
-      return searchListings(c).then((r) => [key, r.total] as const);
-    })).then((pairs) => { if (!stale) setCounts(Object.fromEntries(pairs)); }).catch(() => {});
+    setFailed(false);
+    const setTabCounts = (d?: { sale: number; rent: number }) => { if (d) setCounts({ '': d.sale + d.rent, sale: d.sale, rent: d.rent }); };
+    // Газрын зураг: хуудаслалгүй, бүх тохирох зарын хөнгөн тэмдэг (GET /api/posts/pins, 1000 хүртэл)
+    const req = view === 'map'
+      ? searchPins(apiQ).then((r) => { if (!stale) { setPins(r); setTabCounts(r.dealCounts); } })
+      : searchListings(apiQ).then((r) => { if (!stale) { setRes(r); setTabCounts(r.dealCounts); } });
+    req.catch(() => { if (!stale) setFailed(true); });
     return () => { stale = true; };
-  }, [q, view]);
+  }, [q, view, attempt]);
 
   // Хүлээгдэж буй (debounce) өөрчлөлтүүдийг алдахгүйн тулд нэг дор хуримтлуулна.
   const pending = useRef<((n: URLSearchParams) => void)[]>([]);
@@ -101,7 +118,9 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
   const deal = q.get('deal') === 'rent' ? 'rent' : q.get('deal') === 'sale' ? 'sale' : '';
   const page = Number(q.get('page')) || 1;
   const pages = Math.ceil(res.total / res.per);
+  const shownTotal = view === 'map' ? pins?.total : result?.total;
   const changeView = (v: 'list' | 'map') => { setView(v); store.set('view', v); };
+  const goPage = (n: number) => { setQ((p) => { const x = new URLSearchParams(p); x.set('page', String(n)); return x; }); window.scrollTo(0, 0); };
   const v = (k: string) => q.get(k) || '';
   const advCount = useMemo(() => {
     const s = new Set(ADV_KEYS.filter((k) => q.get(k)).map((k) => k.replace(/(Min|Max)$/, '')));
@@ -209,21 +228,34 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
         </div>
       </div>
 
-      <p className="fresult">{result ? <><b>{res.total}</b> зар олдлоо</> : 'Хайж байна…'}</p>
+      {!failed && <p className="fresult">{shownTotal != null ? <><b>{shownTotal}</b> зар олдлоо</> : 'Хайж байна…'}</p>}
 
-      {!result ? <PageLoader /> : view === 'list' ? (
+      {failed ? <LoadError message="Зар хайж чадсангүй." onRetry={() => setAttempt((a) => a + 1)} />
+      : view === 'map' ? (!pins ? <PageLoader /> : <>
+        {pins.truncated && (
+          <div className="map-note" role="status">
+            <span>Газрын зураг дээр эхний <b>{pins.pins.length}</b> зарыг харуулж байна (нийт {pins.total}). Шүүлтүүрээр нарийсгана уу.</span>
+            <button type="button" className="btn btn-sm" onClick={() => changeView('list')}>Жагсаалтаар бүгдийг үзэх</button>
+          </div>
+        )}
+        {!pins.pins.length && <div className="empty">Тохирох зар олдсонгүй.</div>}
+        <ResultsMap items={pins.pins} />
+      </>)
+      : !result ? <PageLoader /> : (
         <>
           <Grid items={res.items} empty="Тохирох зар олдсонгүй. " />
           {pages > 1 && (
-            <div className="pager">
-              {Array.from({ length: pages }, (_, i) => (
-                <button key={i} className={`btn btn-sm ${i + 1 === page ? 'btn-primary' : ''}`}
-                  onClick={() => { setQ((p) => { const n = new URLSearchParams(p); n.set('page', String(i + 1)); return n; }); window.scrollTo(0, 0); }}>{i + 1}</button>
-              ))}
-            </div>
+            <nav className="pager" aria-label="Хуудас">
+              <button className="btn btn-sm" disabled={page <= 1} onClick={() => goPage(page - 1)} aria-label="Өмнөх хуудас">‹</button>
+              {pageList(page, pages).map((n, i) => n === '…'
+                ? <span key={`gap${i}`} className="pager-gap" aria-hidden="true">…</span>
+                : <button key={n} className={`btn btn-sm ${n === page ? 'btn-primary' : ''}`} aria-current={n === page ? 'page' : undefined}
+                    onClick={() => goPage(n)}>{n}</button>)}
+              <button className="btn btn-sm" disabled={page >= pages} onClick={() => goPage(page + 1)} aria-label="Дараагийн хуудас">›</button>
+            </nav>
           )}
         </>
-      ) : <ResultsMap items={res.items} />}
+      )}
     </div>
   );
 }

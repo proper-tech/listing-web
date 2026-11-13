@@ -395,7 +395,8 @@ label.field > span { display: block; font-size: 13px; color: var(--muted); margi
 .side { position: sticky; top: calc(var(--bar-gap) + var(--bar-h) + 14px); display: flex; flex-direction: column; gap: 12px; }
 .side .price { font-size: 28px; letter-spacing: -.01em; }
 .seller { display: flex; align-items: center; gap: 10px; }
-.avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-2); color: var(--brand-text); display: grid; place-items: center; font-weight: 800; }
+.avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-2); color: var(--brand-text); display: grid; place-items: center; font-weight: 800; overflow: hidden; flex-shrink: 0; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .mini-map { height: 260px; border-radius: var(--radius); overflow: hidden; border: 1px solid #1f1b1424; background: #efe9dc; }
 .mini-map.gmap { height: 380px; background: #e5e3df; }
 .mini-map.gmap iframe { display: block; width: 100%; height: 100%; border: 0; }
@@ -1078,3 +1079,92 @@ a.profile-stat:hover { border-color: var(--gold-500); transform: translateY(-1px
   .profile-head { flex-direction: column; align-items: flex-start; }
   .profile-cols { grid-template-columns: 1fr; }
 }
+
+/* ================= Header: avatar, phone menu ================= */
+/* account link = round photo (or initials) + name; below 960px only the photo, so it never crowds the bar */
+.topbar .user-name { display: flex; flex-direction: row; align-items: center; gap: 8px; max-width: 200px; text-decoration: none; }
+.topbar .user-name-text { display: flex; flex-direction: column; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.hdr-avatar { width: 32px; height: 32px; flex: none; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+  background: var(--brand-2); color: var(--brand-text); font-size: 12px; font-weight: 700; box-shadow: 0 0 0 1px #1f1b141f; }
+.hdr-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 960px) { .topbar .user-name { display: flex; padding-left: 0; border-left: 0; } .topbar .user-name-text { display: none; } }
+
+/* hamburger: only where the nav is hidden */
+.menu-btn { display: none; width: 40px; height: 40px; flex: none; border-radius: 999px; border: 1px solid #1f1b1424; background: #fffdf7;
+  cursor: pointer; place-items: center; padding: 0; }
+.menu-btn > span, .menu-btn > span::before, .menu-btn > span::after { display: block; width: 18px; height: 1.6px; border-radius: 2px;
+  background: var(--text); transition: transform .2s, background .2s; }
+.menu-btn > span { position: relative; }
+.menu-btn > span::before, .menu-btn > span::after { content: ""; position: absolute; left: 0; }
+.menu-btn > span::before { top: -6px; } .menu-btn > span::after { top: 6px; }
+.menu-btn[aria-expanded="true"] > span { background: transparent; }
+.menu-btn[aria-expanded="true"] > span::before { transform: translateY(6px) rotate(45deg); }
+.menu-btn[aria-expanded="true"] > span::after { transform: translateY(-6px) rotate(-45deg); }
+.menu-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+@media (max-width: 860px) {
+  .menu-btn { display: grid; }
+  .topbar .user-logout { display: none; } /* "Гарах" lives in the menu on phones */
+}
+@media (max-width: 520px) {
+  .topbar .user-box .post-btn { width: 40px; padding: 0; justify-content: center; font-size: 20px; font-weight: 500; }
+  .topbar .post-label { display: none; }
+  .topbar-right, .topbar .user-box { gap: 8px; }
+}
+
+/* the menu itself: drops down inside the floating bar, scrolls if taller than the screen */
+.mnav { display: none; padding: 6px 14px 14px; border-top: 1px solid #1f1b141a; max-height: calc(100dvh - 100px); overflow-y: auto;
+  overscroll-behavior: contain; animation: mnav-in .18s ease-out; }
+@media (max-width: 860px) { .mnav { display: block; } body.mnav-open { overflow: hidden; } }
+@keyframes mnav-in { from { opacity: 0; transform: translateY(-4px); } }
+.mnav a { color: var(--text); text-decoration: none; }
+.mnav-user { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #1f1b141a; }
+.mnav-user .hdr-avatar { width: 40px; height: 40px; font-size: 14px; }
+.mnav-user span { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.mnav-user small { color: var(--muted); font-size: 12px; }
+.mnav-group { padding: 12px 0 4px; border-bottom: 1px solid #1f1b141a; }
+.mnav-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; font-size: 16px; padding: 4px; }
+.mnav-head span { font-size: 13px; font-weight: 500; color: var(--brand-text); }
+.mnav-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; padding: 4px 0 6px; }
+.mnav-cats a { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 8px; border-radius: 10px; font-size: 14px; }
+.mnav-cats a:hover, .mnav-cats a:active { background: var(--brand-2); }
+.mnav-cats svg { flex: none; color: var(--brand-text); }
+.mnav-links { display: flex; flex-direction: column; padding: 8px 0; }
+.mnav-links a { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 4px; font-weight: 500;
+  border-bottom: 1px solid #1f1b140d; }
+.mnav-links a:last-child { border-bottom: 0; }
+.mnav-links .count { min-width: 20px; height: 20px; display: inline-grid; place-items: center; padding: 0 6px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; background: var(--brand); color: var(--on-brand); }
+.mnav > .btn-block { margin-top: 8px; height: 44px; border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) { .mnav { animation: none; } .menu-btn > span, .menu-btn > span::before, .menu-btn > span::after { transition: none; } }
+
+/* ================= Load errors, skeletons, pager ================= */
+.load-error { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 24px 0; padding: 18px 20px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--line); }
+.load-error > svg { width: 28px; height: 28px; flex: none; fill: none; stroke: var(--danger); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.load-error > div { display: flex; flex-direction: column; flex: 1 1 220px; min-width: 0; }
+.load-error span { color: var(--muted); font-size: 14px; }
+.load-error .btn { border-radius: 999px; }
+.load-error.compact { margin: 12px 0; padding: 12px 16px; }
+.card-skeleton { min-height: 300px; border-radius: 14px; background: linear-gradient(100deg, #1f1b140a 30%, #1f1b1414 50%, #1f1b140a 70%) 0 0 / 300% 100%;
+  animation: skel 1.4s ease-in-out infinite; }
+@keyframes skel { to { background-position: -150% 0; } }
+@media (prefers-reduced-motion: reduce) { .card-skeleton { animation: none; } }
+.pager { flex-wrap: wrap; align-items: center; }
+.pager .btn { min-width: 36px; }
+.pager .btn:disabled { opacity: .4; cursor: default; }
+.pager-gap { padding: 0 4px; color: var(--muted); }
+
+/* "Зар нэмэх": restored-draft notice */
+.draft-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; padding: 10px 12px 10px 16px;
+  border-radius: 12px; background: var(--gold-50); border: 1px solid var(--gold-200); font-size: 14px; }
+.draft-note > span { flex: 1 1 220px; }
+.draft-note .btn { border-radius: 999px; }
+.draft-note-x { width: 28px; height: 28px; border: 0; background: none; font-size: 20px; line-height: 1; color: var(--muted); cursor: pointer; border-radius: 50%; }
+.draft-note-x:hover { background: #1f1b140f; color: var(--text); }
+.report-note { font-style: italic; margin-top: 2px; max-width: 240px; overflow-wrap: anywhere; }
+
+/* search map: shown only when a search has more matches than the map can hold (GET /api/posts/pins limit) */
+.map-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 12px 10px 16px;
+  border-radius: 12px; background: var(--gold-50); border: 1px solid var(--gold-200); font-size: 14px; }
+.map-note > span { flex: 1 1 260px; }
+.map-note .btn { border-radius: 999px; }

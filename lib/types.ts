@@ -33,6 +33,8 @@ export interface Listing {
   id: string;
   sellerName: string;
   sellerType: SellerType;
+  /** Posting agent's profile photo URL (only when the seller is the agent, not an owner) */
+  sellerAvatar?: string;
   category: Category;
   dealType: DealType;
   title: string;
@@ -84,5 +86,9 @@ export interface Report { id: string; listingId: string; reason: string; note?: 
 export interface Inquiry { id: string; listingId: string; name: string; phone: string; email?: string; message: string; createdAt: string; read?: boolean }
 export interface InquiryWithListing extends Inquiry { listingTitle: string }
 
-export interface SearchResult { total: number; page: number; per: number; items: Listing[] }
+export interface SearchResult {
+  total: number; page: number; per: number; items: Listing[];
+  /** with `facets: 'deal'`: matches per deal type under the other filters (the search page's tab counts) */
+  dealCounts?: { sale: number; rent: number };
+}
 export interface Stats { counts: Record<string, number>; total: number }

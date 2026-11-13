@@ -9,7 +9,7 @@ import { homeFor } from '@/lib/session';
 import { myListings, adminListings } from '@/lib/api/listings';
 import { myInquiries } from '@/lib/api/inquiries';
 import { updateProfile, uploadAvatar, type ProfilePatch } from '@/lib/api/auth';
-import { adminUsers } from '@/lib/mock/api';
+import { adminUsers } from '@/lib/api/admin';
 import { fmtDate } from '@/lib/format';
 import type { User } from '@/lib/types';
 import { useAuth } from './Auth';

@@ -48,9 +48,39 @@ const listingToDraft = (l: Listing, phone: string): Draft => ({
 });
 type EditInfo = { id: string; listing: Listing; initial: Draft };
 
-// Keeps an unfinished draft while the user browses other pages (until a full reload),
-// but never hands one user's draft to another.
+// Keeps an unfinished draft while the user browses other pages, but never hands one user's draft to another.
 let draftCache: { userId: string; draft: Draft } | null = null;
+
+/* The draft also survives a reload or a closed tab (localStorage, per user). Only what can be restored is kept:
+   uploaded photos and finished 360° rooms are plain URLs; photos still uploading and rooms still being stitched
+   hold browser-only files, so they are dropped and the user re-adds them. */
+const DRAFT_KEY = (userId: string) => `post-draft:${userId}`;
+const isLocalUrl = (u?: string) => !u || /^(blob|data):/.test(u);
+function storable(d: Draft): Draft {
+  const rooms = d.tour.rooms
+    .filter((r) => r.status === 'ready' && !isLocalUrl(r.panorama?.src))
+    .map(({ files: _f, progress: _p, progressText: _t, ...r }) => r);
+  return {
+    ...d,
+    photos: d.photos.filter((p) => !p.uploading && !isLocalUrl(p.src)).map((p) => ({ ...p, preview: p.src! })),
+    tour: { startRoomId: rooms.some((r) => r.id === d.tour.startRoomId) ? d.tour.startRoomId : rooms[0]?.id ?? null, rooms },
+  };
+}
+function loadStoredDraft(user: User): Draft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY(user.id));
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as { v: number; at: number; draft: Draft };
+    if (saved.v !== 1 || Date.now() - saved.at > 30 * 24 * 3600 * 1000) return null; // older than 30 days: start fresh
+    return { ...newDraft(user), ...saved.draft };
+  } catch { return null; }
+}
+function saveStoredDraft(userId: string, d: Draft | null) {
+  try {
+    if (d) localStorage.setItem(DRAFT_KEY(userId), JSON.stringify({ v: 1, at: Date.now(), draft: storable(d) }));
+    else localStorage.removeItem(DRAFT_KEY(userId));
+  } catch { /* private mode / storage full: the in-memory draft still works */ }
+}
 
 const STEP_NAMES = ['Ангилал', 'Мэдээлэл', 'Зураг', '360° аялал', 'Байршил', 'Холбоо барих', 'Нийтлэх'];
 const uid = () => Math.random().toString(36).slice(2, 8);
@@ -96,7 +126,12 @@ const draftToInput = (d: Draft) => ({
 
 function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
   const toast = useToast();
-  const [d, setD] = useState<Draft>(() => edit ? edit.initial : (draftCache?.userId === user.id ? draftCache.draft : newDraft(user)));
+  // where the starting draft came from: 'stored' shows the "draft restored" notice
+  const [origin] = useState<'edit' | 'memory' | 'stored' | 'new'>(() =>
+    edit ? 'edit' : draftCache?.userId === user.id ? 'memory' : loadStoredDraft(user) ? 'stored' : 'new');
+  const [d, setD] = useState<Draft>(() =>
+    edit ? edit.initial : draftCache?.userId === user.id ? draftCache.draft : loadStoredDraft(user) ?? newDraft(user));
+  const [restored, setRestored] = useState(origin === 'stored' && JSON.stringify(d) !== JSON.stringify(newDraft(user)));
   // edit mode has no payment/publish step
   const steps = edit ? STEP_NAMES.slice(0, -1) : STEP_NAMES;
   const initialJson = useRef(edit ? JSON.stringify(edit.initial) : '');
@@ -106,7 +141,13 @@ function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ id: string; status: string } | null>(null);
   const [tried, setTried] = useState<Record<number, boolean>>({}); // steps where "Дараах" was pressed: show every error
-  useEffect(() => { if (!edit) draftCache = { userId: user.id, draft: d }; }, [d, user.id, edit]);
+  useEffect(() => {
+    if (edit) return;
+    draftCache = { userId: user.id, draft: d };
+    const t = setTimeout(() => saveStoredDraft(user.id, d), 400);
+    return () => clearTimeout(t);
+  }, [d, user.id, edit]);
+  const startOver = () => { draftCache = null; saveStoredDraft(user.id, null); setD(newDraft(user)); setStep(0); setTried({}); setRestored(false); };
   // warn before closing the tab with unsaved edits
   useEffect(() => {
     if (!dirty) return;
@@ -148,6 +189,7 @@ function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
     try {
       const res = await createListing(draftToInput(d));
       draftCache = null;
+      saveStoredDraft(user.id, null);
       setDone(res);
     } catch (e) { setError((e as Error).message); }
     setBusy(false);
@@ -178,7 +220,7 @@ function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
           <Link className={`btn ${live ? '' : 'btn-primary'}`} href="/my">Миний зар</Link>
           {user.role === 'admin' && <>{' '}<Link className="btn" href="/admin">Админ самбар</Link></>}
         </p>
-        <button className="btn btn-sm" onClick={() => { setD(newDraft(user)); setDone(null); setStep(0); }}>Шинэ зар нэмэх</button>
+        <button className="btn btn-sm" onClick={() => { startOver(); setDone(null); }}>Шинэ зар нэмэх</button>
       </div>
     );
   }
@@ -211,6 +253,13 @@ function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
         <div className="wiz-head">
           <h1>Зар нэмэх</h1>
           <span className="wiz-count">Алхам {step + 1} / {steps.length}</span>
+        </div>
+      )}
+      {restored && (
+        <div className="draft-note" role="status">
+          <span>Өмнөх ноорог тань сэргээгдлээ. Илгээгдэж дуусаагүй байсан зураг байвал дахин нэмнэ үү.</span>
+          <button type="button" className="btn btn-sm" onClick={startOver}>Шинээр эхлэх</button>
+          <button type="button" className="draft-note-x" aria-label="Хаах" onClick={() => setRestored(false)}>×</button>
         </div>
       )}
       <ol className="wsteps" aria-label={edit ? 'Засах хэсгүүд' : 'Зар нэмэх алхамууд'}>

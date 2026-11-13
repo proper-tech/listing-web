@@ -1,6 +1,5 @@
 // Shared axios instance for the real backend (listing-server: Cloudflare Worker + Hono, Neon, R2).
-// Used by lib/api/auth.ts (sign-in) and lib/api/listings.ts (posts, uploads). Agent management and reports
-// in the admin panel still read lib/mock/api.ts until the server has endpoints for them.
+// Used by every lib/api/*.ts module: auth, listings and uploads, inquiries, admin (agents, reports).
 //
 // Where requests go:
 //  - Browser: a relative `/api/...` by default. next.config.ts forwards /api/* to API_URL, so the

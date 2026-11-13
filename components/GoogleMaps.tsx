@@ -4,7 +4,7 @@
 // GOOGLE_MAPS_API_KEY is set in .env (exposed to the browser by next.config.ts); otherwise the CARTO/Leaflet maps are used.
 // Restrict the key to your domains (HTTP referrers) in Google Cloud Console; it needs "Maps JavaScript API" enabled.
 import { useEffect, useRef, useState } from 'react';
-import type { Listing } from '@/lib/types';
+import type { MapPin } from '@/lib/api/listings';
 import { NOIMG, UB } from '@/lib/constants';
 import { fmtPrice } from '@/lib/format';
 
@@ -64,12 +64,12 @@ function useGoogleMap(ref: React.RefObject<HTMLDivElement | null>, init: (g: Lib
 
 const MapError = ({ msg }: { msg: string }) => <div className="map-error">Газрын зураг ачаалж чадсангүй. {msg}</div>;
 
-export function GoogleResultsMap({ items }: { items: Listing[] }) {
+export function GoogleResultsMap({ items }: { items: MapPin[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const markers = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const info = useRef<google.maps.InfoWindow | null>(null);
 
-  const draw = (g: Libs, map: google.maps.Map, list: Listing[]) => {
+  const draw = (g: Libs, map: google.maps.Map, list: MapPin[]) => {
     markers.current.forEach((m) => { m.map = null; });
     markers.current = [];
     info.current ??= new g.InfoWindow({ maxWidth: 260 });
@@ -79,14 +79,14 @@ export function GoogleResultsMap({ items }: { items: Listing[] }) {
       const pin = document.createElement('span');
       pin.className = `map-pin g ${l.promo === 2 ? 'top' : l.promo === 1 ? 'vip' : ''}`;
       pin.textContent = fmtPrice(l.price).replace('₮', '').trim();
-      const meta = [l.location.district, l.rooms ? `${l.rooms} өрөө` : '', l.area ? `${l.area} м²` : ''].filter(Boolean).map((x) => esc(String(x))).join(' · ');
+      const meta = [l.district, l.rooms ? `${l.rooms} өрөө` : '', l.area ? `${l.area} м²` : ''].filter(Boolean).map((x) => esc(String(x))).join(' · ');
       const card =
         `<a class="mp-card" href="/listing/${esc(l.id)}">` +
-          `<span class="mp-img"><img src="${esc(l.photos[0]?.src || NOIMG)}" alt="" loading="lazy"></span>` +
+          `<span class="mp-img"><img src="${esc(l.cover || NOIMG)}" alt="" loading="lazy"></span>` +
           `<span class="mp-body"><b class="mp-price">${esc(fmtPrice(l.price))}${l.dealType === 'rent' ? '<small> /сар</small>' : ''}</b>` +
           `<span class="mp-title">${esc(l.title)}</span>${meta ? `<span class="mp-meta">${meta}</span>` : ''}` +
           `<span class="mp-more">Дэлгэрэнгүй →</span></span></a>`;
-      const position = { lat: l.location.lat, lng: l.location.lng };
+      const position = { lat: l.lat, lng: l.lng };
       const m = new g.Marker({ map, position, content: pin, title: l.title, zIndex: l.promo, gmpClickable: true });
       m.addListener('gmp-click', () => { info.current!.setContent(card); info.current!.open({ map, anchor: m }); });
       markers.current.push(m);

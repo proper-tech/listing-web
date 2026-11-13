@@ -3,13 +3,11 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { useRouter } from 'next/navigation';
 import { getMe, logout as apiLogout } from '@/lib/api/auth';
 import { setUnauthorizedHandler } from '@/lib/api/client';
-import { mirrorSession } from '@/lib/mock/api';
 import type { User } from '@/lib/types';
 
 interface AuthState {
   user: User | null;
   loading: boolean;
-  /** Resolves once mock-backed pages can see the new user too; await it before navigating. */
   setUser: (u: User | null) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -20,17 +18,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Pages that still use mock data read the signed-in user from the mock DB, so keep it in step.
-  // `loading` stays true until the mirror is written, so guarded pages never read a stale mock session.
-  const setUser = useCallback(async (u: User | null) => {
-    setUserState(u);
-    await mirrorSession(u).catch(() => {});
-  }, []);
+  const setUser = useCallback(async (u: User | null) => { setUserState(u); }, []);
 
   useEffect(() => {
     getMe()
       .catch(() => null) // API unreachable: treat as signed out
-      .then(async (u) => { setUserState(u); await mirrorSession(u).catch(() => {}); })
+      .then((u) => setUserState(u))
       .finally(() => setLoading(false));
   }, []);
 

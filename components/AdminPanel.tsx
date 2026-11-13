@@ -2,15 +2,15 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { adminListings, adminUpdateListing } from '@/lib/api/listings';
-// agents and reports have no API yet: they still live in the browser's mock store
-import { adminCreateUser, adminUpdateUser, adminUsers, dismissReports, listReports } from '@/lib/mock/api';
+import { adminCreateUser, adminUpdateUser, adminUsers, dismissReports, listReports } from '@/lib/api/admin';
 import type { AdminListing, AdminUser, Report } from '@/lib/types';
-import { CATS, NOIMG, PLACEMENTS, STATUS_MN } from '@/lib/constants';
+import { CATS, NOIMG, PLACEMENTS, REPORT_REASON_MN, STATUS_MN } from '@/lib/constants';
 import { fmtDate, fmtPrice } from '@/lib/format';
 import { Price } from './ListingCard';
 import { useToast } from './Toast';
 import { useAuth } from './Auth';
 import PageLoader from '@/components/PageLoader';
+import LoadError from '@/components/LoadError';
 
 type Tab = 'pending' | 'reported' | 'active' | 'all' | 'agents';
 const TAB_NAMES: Record<Tab, string> = { pending: 'Хянах', reported: 'Мэдээлэгдсэн', active: 'Идэвхтэй', all: 'Бүх зар', agents: 'Агентууд' };
@@ -21,8 +21,10 @@ export default function AdminPanel() {
   const [data, setData] = useState<{ items: AdminListing[]; reports: Report[] } | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [tab, setTab] = useState<Tab>('pending');
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
+    setFailed(false);
     try {
       const [items, reports, u] = await Promise.all([
         adminListings(),
@@ -31,11 +33,11 @@ export default function AdminPanel() {
       ]);
       setData({ items: items.map((l) => ({ ...l, reports: reports.filter((r) => r.listingId === l.id).length })), reports });
       setUsers(u);
-    } catch (e) { toast((e as Error).message); }
+    } catch (e) { toast((e as Error).message); setFailed(true); }
   }, [toast]);
   useEffect(() => { load(); }, [load]);
 
-  if (!data) return <PageLoader />;
+  if (!data) return failed ? <LoadError message="Админ самбар ачаалж чадсангүй." onRetry={load} /> : <PageLoader />;
 
   const groups: Record<Exclude<Tab, 'agents'>, AdminListing[]> = {
     pending: data.items.filter((l) => l.status === 'pending'),
@@ -88,7 +90,7 @@ export default function AdminPanel() {
                 <span className={`badge ${l.status}`}>{STATUS_MN[l.status]}</span>{' '}
                 {l.placement !== 'free' && <span className={`badge ${l.placement}`}>{l.placement.toUpperCase()}</span>}
               </td>
-              <td>{l.reports > 0 && <>⚑ {l.reports}<div className="muted small">{data.reports.filter((r) => r.listingId === l.id).map((r) => r.reason).join(', ')}</div></>}</td>
+              <td>{l.reports > 0 && <>⚑ {l.reports}<ReportReasons reports={data.reports.filter((r) => r.listingId === l.id)} /></>}</td>
               <td style={{ whiteSpace: 'nowrap' }}>
                 {l.status !== 'active' && <button className="btn btn-sm btn-primary" onClick={() => act(l, { status: 'active' })}>Батлах</button>}{' '}
                 {l.status === 'pending' && <button className="btn btn-sm" onClick={() => act(l, { status: 'rejected' })}>Татгалзах</button>}{' '}
@@ -101,6 +103,19 @@ export default function AdminPanel() {
         </tbody></table></div>
       )}
     </>
+  );
+}
+
+/** "Үнэ буруу ×2, Хуурамч зар" + any notes the reporters wrote. */
+function ReportReasons({ reports }: { reports: Report[] }) {
+  const counts = new Map<string, number>();
+  for (const r of reports) counts.set(r.reason, (counts.get(r.reason) ?? 0) + 1);
+  const notes = reports.map((r) => r.note?.trim()).filter(Boolean);
+  return (
+    <div className="muted small">
+      {[...counts].map(([reason, n]) => `${REPORT_REASON_MN[reason] ?? reason}${n > 1 ? ` ×${n}` : ''}`).join(', ')}
+      {notes.map((n, i) => <div key={i} className="report-note">“{n}”</div>)}
+    </div>
   );
 }
 

@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { getPhone } from '@/lib/api/listings';
-import { reportListing } from '@/lib/mock/api'; // no reports API yet: kept in this browser for the admin panel
+import { reportListing } from '@/lib/api/admin';
+import { REPORT_REASON_MN } from '@/lib/constants';
 import { useToast } from './Toast';
 import FavButton from './FavButton';
 
@@ -36,7 +37,7 @@ export function PhoneAndFav({ id, title }: { id: string; title: string }) {
   );
 }
 
-const REASONS: [string, string][] = [['fake', 'Хуурамч зар'], ['duplicate', 'Давхардсан'], ['wrong_price', 'Үнэ буруу'], ['sold', 'Зарагдсан'], ['other', 'Бусад']];
+const REASONS = Object.entries(REPORT_REASON_MN);
 
 export function ReportButton({ id }: { id: string }) {
   const toast = useToast();

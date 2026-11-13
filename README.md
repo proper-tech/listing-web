@@ -3,7 +3,7 @@
 `real-estate-platform-plan.md`-ийн дагуу хийсэн ажиллах прототип: Phase 1 бүхэлдээ, Phase 2-оос 360° хэсэг.
 
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
-- **Backend:** [`listing-server`](../listing-server) API — нэвтрэлт ([`lib/api/auth.ts`](lib/api/auth.ts)), зар, зураг ([`lib/api/listings.ts`](lib/api/listings.ts)). Админ самбарын агент удирдлага, зарын гомдол одоохондоо **mock** ([`lib/mock/`](lib/mock)).
+- **Backend:** [`listing-server`](../listing-server) API — нэвтрэлт ([`lib/api/auth.ts`](lib/api/auth.ts)), зар, зураг ([`lib/api/listings.ts`](lib/api/listings.ts)). Хүсэлт ([`lib/api/inquiries.ts`](lib/api/inquiries.ts)), агент удирдлага, зарын мэдээлэл ([`lib/api/admin.ts`](lib/api/admin.ts)). VIP/Онцгой төлбөр одоохондоо демо.
 
 ## Ажиллуулах
 
@@ -20,7 +20,7 @@ http://localhost:3000 нээнэ. Нэвтрэхийн тулд `listing-server`
 ## Mock өгөгдөл
 
 - [`lib/mock/seed.ts`](lib/mock/seed.ts) — 2 хэрэглэгч (админ агент удирдлагад). Жишээ зар байхгүй: зарууд `listing-server` API-аас ирнэ. [`public/mock/demo-capture/`](public/mock/demo-capture) — PostWizard-ийн туршилтын 12 зураг.
-- [`lib/mock/api.ts`](lib/mock/api.ts) — хайлт, зар нэмэх, админ гэх мэт "API"-г хөтөч дотор гүйцэтгэнэ. Нэвтэрсэн агентыг `mirrorSession()` mock DB-д тусгана (имэйлээр тааруулна).
+- [`lib/mock/api.ts`](lib/mock/api.ts) — хуучин хөтөч доторх "API". Одоо ямар ч хуудас ашиглахгүй (бүгд `listing-server`-ээс уншина); лавлагаанд үлдээв.
   Өөрчлөлт (шинэ зар, агент, нууц үг...) хөтчийн IndexedDB-д хадгалагдана; тухайн хөтөч дээр л харагдана.
 - Оруулсан зураг data: URL болж зартайгаа хадгалагдана.
 - Анхны төлөвт буцаах: Админ самбар → "Mock өгөгдөл шинэчлэх" (эсвэл хөтчийн site data-г цэвэрлэх).
@@ -40,7 +40,7 @@ http://localhost:3000 нээнэ. Нэвтрэхийн тулд `listing-server`
 Нэвтрэлт `listing-server`-ийн `/api/auth/*` (login, logout, me, change-password)-аар явна. Сешн нь HttpOnly JWT cookie.
 Агент үүсгэх: `listing-server` дотор `npm run agent:create -- <email> "<нэр>" [admin|agent] --local` (түр нууц үг хэвлэнэ).
 
-Анх нэвтрэхдээ түр нууц үгээ заавал солино. Админ самбарын агент удирдлага одоохондоо mock (тэнд үүсгэсэн агент нэвтэрч чадахгүй).
+Анх нэвтрэхдээ түр нууц үгээ заавал солино. Админ самбар → "Агентууд"-д үүсгэсэн агент шууд нэвтэрнэ.
 
 ## Бүтэц
 

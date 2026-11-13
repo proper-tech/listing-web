@@ -5,6 +5,7 @@ import type { Listing } from '@/lib/types';
 import { CATS } from '@/lib/constants';
 import { fmtDate, fmtFloor, fmtFull, timeAgo } from '@/lib/format';
 import { getListing, searchListings } from '@/lib/api/listings';
+import { ApiError } from '@/lib/api/client';
 import { Badges, Grid, Price } from './ListingCard';
 import ListingMedia from './ListingMedia';
 import { PhoneAndFav, ReportButton } from './ListingActions';
@@ -12,11 +13,13 @@ import InquiryForm from './InquiryForm';
 import { MiniMap } from './Maps';
 import { useAuth } from './Auth';
 import PageLoader from '@/components/PageLoader';
+import LoadError from '@/components/LoadError';
 
 export default function ListingView({ id, startWithTour }: { id: string; startWithTour: boolean }) {
   const { user, loading: authLoading } = useAuth();
-  const [l, setL] = useState<Listing | null | 'missing'>(null);
-  const [similar, setSimilar] = useState<Listing[] | null>(null);
+  const [l, setL] = useState<Listing | null | 'missing' | 'error'>(null);
+  const [similar, setSimilar] = useState<Listing[] | null | 'failed'>(null);
+  const [attempt, setAttempt] = useState(0); // listing or similar failed → "Дахин оролдох"
   const counted = useRef(false);
 
   // wait for the login check: unpublished ads are visible to their owner and admins
@@ -28,18 +31,26 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
     getListing(id, { countView }).then(async (x) => {
       if (stale) return;
       setL(x);
-      const sim = await searchListings({ deal: x.dealType, cat: x.category, per: '9' });
+      setSimilar(null);
+      try {
+        const sim = await searchListings({ deal: x.dealType, cat: x.category, per: '9' });
+        if (stale) return;
+        setSimilar(sim.items.filter((s) => s.id !== x.id)
+          .sort((a, b) => Number(b.location.district === x.location.district) - Number(a.location.district === x.location.district) || Math.abs(a.price - x.price) - Math.abs(b.price - x.price))
+          .slice(0, 4));
+      } catch { if (!stale) setSimilar('failed'); }
+    }).catch((e) => {
       if (stale) return;
-      setSimilar(sim.items.filter((s) => s.id !== x.id)
-        .sort((a, b) => Number(b.location.district === x.location.district) - Number(a.location.district === x.location.district) || Math.abs(a.price - x.price) - Math.abs(b.price - x.price))
-        .slice(0, 4));
-    }).catch(() => { if (!stale) setL('missing'); });
+      // 404 = the ad is gone; anything else (network, server) can be retried
+      setL(e instanceof ApiError && e.status !== 404 && e.status !== 403 ? 'error' : 'missing');
+    });
     return () => { stale = true; };
-  }, [id, authLoading, user?.id]);
+  }, [id, authLoading, user?.id, attempt]);
 
-  useEffect(() => { if (l && l !== 'missing') document.title = `${l.title} — ProperTech`; }, [l]);
+  useEffect(() => { if (l && l !== 'missing' && l !== 'error') document.title = `${l.title} — ProperTech`; }, [l]);
 
   if (!l) return <PageLoader />;
+  if (l === 'error') return <LoadError message="Зарыг ачаалж чадсангүй." onRetry={() => { setL(null); setAttempt((a) => a + 1); }} />;
   if (l === 'missing') return <div className="empty">Зар олдсонгүй. <Link href="/">Нүүр хуудас</Link></div>;
 
   const specs: [string, string | number | undefined | null | false][] = [
@@ -79,7 +90,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
             <div className="price"><Price l={l} /></div>
             {l.pricePerM2 && <div className="muted small">м² — {fmtFull(l.pricePerM2)}</div>}
             <div className="seller" style={{ margin: '16px 0' }}>
-              <div className="avatar">{l.sellerName.slice(0, 1)}</div>
+              <div className="avatar">{l.sellerAvatar ? <img src={l.sellerAvatar} alt="" /> : l.sellerName.slice(0, 1)}</div>
               <div><b>{l.sellerName}</b><div className="muted small">{l.sellerType === 'owner' ? 'Эзэмшигч' : 'Агент'}</div></div>
             </div>
             {l.status === 'active' ? <PhoneAndFav id={l.id} title={l.title} /> : <div className="muted small">Зар нийтлэгдээгүй байна — утас харагдахгүй.</div>}
@@ -95,7 +106,9 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
         </aside>
       </div>
       <h2>Төстэй зар</h2>
-      {similar ? <Grid items={similar} empty="Төстэй зар алга" /> : <div className="loading">Ачаалж байна…</div>}
+      {similar === 'failed' ? <LoadError compact message="Төстэй зар ачаалж чадсангүй." onRetry={() => setAttempt((a) => a + 1)} />
+        : similar ? <Grid items={similar} empty="Төстэй зар алга" />
+        : <div className="grid" aria-busy="true" aria-label="Ачаалж байна">{[0, 1, 2, 3].map((i) => <div key={i} className="card card-skeleton" />)}</div>}
     </>
   );
 }

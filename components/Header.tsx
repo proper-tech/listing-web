@@ -20,6 +20,19 @@ export default function Header() {
   const user = mounted ? auth.user : null;
   const loading = !mounted || auth.loading;
   const { logout } = auth;
+  // phone menu (below 860px the nav is hidden): closes on navigation, Escape, and when the screen gets wide again
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => { setMenuOpen(false); }, [path, q]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    const wide = window.matchMedia('(min-width: 861px)');
+    const onWide = () => { if (wide.matches) setMenuOpen(false); };
+    document.addEventListener('keydown', onKey);
+    wide.addEventListener('change', onWide);
+    document.body.classList.add('mnav-open');
+    return () => { document.removeEventListener('keydown', onKey); wide.removeEventListener('change', onWide); document.body.classList.remove('mnav-open'); };
+  }, [menuOpen]);
 
   const onDeal = (deal: 'sale' | 'rent') =>
     path === '/search' && (q.get('deal') || 'sale') === deal ? 'on' : '';
@@ -48,8 +61,8 @@ export default function Header() {
           <span>Proper<i>Tech</i></span>
         </Link>
         <nav className="nav" id="nav">
-          {dropdown('sale', 'Зарах')}
-          {dropdown('rent', 'Түрээслэх')}
+          {dropdown('sale', 'Зарна')}
+          {dropdown('rent', 'Түрээс')}
           <Link href="/saved" className={onPage('saved')}>
             Хадгалсан <span className="count">{favs.length || ''}</span>
           </Link>
@@ -65,11 +78,12 @@ export default function Header() {
         )}
         {!loading && (user ? (
           <div className="user-box">
-            <Link href="/post" className="btn btn-primary post-btn">+ Зар нэмэх</Link>
+            <Link href="/post" className="btn btn-primary post-btn" aria-label="Зар нэмэх">+<span className="post-label"> Зар нэмэх</span></Link>
             <Link href="/account" className="user-name" title="Миний бүртгэл">
-              {user.name}<small>{user.role === 'admin' ? 'Админ' : 'Агент'}</small>
+              <Avatar user={user} />
+              <span className="user-name-text">{user.name}<small>{user.role === 'admin' ? 'Админ' : 'Агент'}</small></span>
             </Link>
-            <button className="btn btn-sm" onClick={logout}>Гарах</button>
+            <button className="btn btn-sm user-logout" onClick={logout}>Гарах</button>
           </div>
         ) : (
           <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn">
@@ -77,8 +91,49 @@ export default function Header() {
             <span><span className="login-who">Агентаар </span>нэвтрэх</span>
           </Link>
         ))}
+        <button type="button" className="menu-btn" aria-expanded={menuOpen} aria-controls="mobile-menu"
+          aria-label={menuOpen ? 'Цэс хаах' : 'Цэс нээх'} onClick={() => setMenuOpen((o) => !o)}>
+          <span aria-hidden="true" />
+        </button>
         </div>
       </div>
+      {menuOpen && (
+        <nav id="mobile-menu" className="mnav" aria-label="Цэс"
+          onClick={(e) => { if ((e.target as HTMLElement).closest('a')) setMenuOpen(false); }}>
+          {user && (
+            <Link href="/account" className="mnav-user">
+              <Avatar user={user} />
+              <span><b>{user.name}</b><small>{user.role === 'admin' ? 'Админ' : 'Агент'} · Миний бүртгэл</small></span>
+            </Link>
+          )}
+          {(['sale', 'rent'] as const).map((deal) => (
+            <div key={deal} className="mnav-group">
+              <Link href={`/search?deal=${deal}`} className="mnav-head">{deal === 'sale' ? 'Зарна' : 'Түрээс'} <span>Бүгдийг харах →</span></Link>
+              <div className="mnav-cats">
+                {CAT_KEYS.map((k) => (
+                  <Link key={k} href={`/search?deal=${deal}&cat=${k}`}><CatIcon cat={k} size={16} /><span>{CATS[k].name}</span></Link>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="mnav-links">
+            <Link href="/search?tour=1">360° аялалтай зар</Link>
+            <Link href="/saved">Хадгалсан{favs.length > 0 && <span className="count">{favs.length}</span>}</Link>
+            {user && <Link href="/my">Миний зар</Link>}
+            {user?.role === 'admin' && <Link href="/admin">Админ самбар</Link>}
+            <Link href="/help">Тусламж</Link>
+          </div>
+          {user
+            ? <button type="button" className="btn btn-block" onClick={logout}>Гарах</button>
+            : <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn btn-block">Агентаар нэвтрэх</Link>}
+        </nav>
+      )}
     </header>
   );
+}
+
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
+
+function Avatar({ user }: { user: { name: string; avatar?: string } }) {
+  return <span className="hdr-avatar" aria-hidden="true">{user.avatar ? <img src={user.avatar} alt="" /> : initials(user.name)}</span>;
 }

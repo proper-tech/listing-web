@@ -56,6 +56,11 @@ export const STATUS_MN: Record<ListingStatus, string> = {
   pending: 'Хянагдаж буй', active: 'Идэвхтэй', expired: 'Хугацаа дууссан', sold: 'Зарагдсан', rejected: 'Татгалзсан', draft: 'Ноорог', archived: 'Архивласан',
 };
 
+/** Зарыг мэдээлэх шалтгаан (server: fake | duplicate | wrong_price | sold | other) → харуулах нэр. */
+export const REPORT_REASON_MN: Record<string, string> = {
+  fake: 'Хуурамч зар', duplicate: 'Давхардсан', wrong_price: 'Үнэ буруу', sold: 'Зарагдсан', other: 'Бусад',
+};
+
 export const ROOM_NAMES = ['Зочны өрөө', 'Гал тогоо', 'Унтлагын өрөө', 'Хүүхдийн өрөө', 'Угаалгын өрөө', 'Коридор', 'Тагт', 'Хашаа', 'Гадна тал'];
 
 export const NOIMG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><rect width="300" height="200" fill="#e9ecef"/><path d="M110 120l40-40 40 40v40h-80z" fill="#ced4da"/></svg>');

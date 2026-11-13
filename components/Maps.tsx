@@ -2,7 +2,7 @@
 // Leaflet touches `window` on import, so it is loaded inside effects only (never during SSR).
 import { useEffect, useRef } from 'react';
 import type * as Leaflet from 'leaflet';
-import type { Listing } from '@/lib/types';
+import type { MapPin } from '@/lib/api/listings';
 import { NOIMG, UB } from '@/lib/constants';
 import { fmtPrice } from '@/lib/format';
 import { GOOGLE_KEY, GoogleLocationPicker, GoogleResultsMap } from './GoogleMaps';
@@ -92,32 +92,33 @@ function useLeafletMap(ref: React.RefObject<HTMLDivElement | null>, init: (L: ty
 }
 
 /** Search results map: real Google Maps when GOOGLE_MAPS_API_KEY is set, otherwise CARTO tiles via Leaflet. */
-export function ResultsMap({ items }: { items: Listing[] }) {
+export function ResultsMap({ items }: { items: MapPin[] }) {
   return GOOGLE_KEY ? <GoogleResultsMap items={items} /> : <LeafletResultsMap items={items} />;
 }
 
-function LeafletResultsMap({ items }: { items: Listing[] }) {
+function LeafletResultsMap({ items }: { items: MapPin[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const layer = useRef<Leaflet.LayerGroup | null>(null);
-  const draw = (L: typeof Leaflet, map: Leaflet.Map, list: Listing[]) => {
+  const draw = (L: typeof Leaflet, map: Leaflet.Map, list: MapPin[]) => {
     layer.current?.remove();
     const g = L.layerGroup().addTo(map);
     layer.current = g;
     const pts: [number, number][] = [];
     for (const l of list) {
       const cls = l.promo === 2 ? 'top' : l.promo === 1 ? 'vip' : '';
-      const meta = [l.location.district, l.rooms ? `${l.rooms} өрөө` : '', l.area ? `${l.area} м²` : ''].filter(Boolean).map((x) => esc(String(x))).join(' · ');
-      L.marker([l.location.lat, l.location.lng], { riseOnHover: true, icon: pinIcon(L, `<span class="map-pin ${cls}">${esc(fmtPrice(l.price).replace('₮', '').trim())}</span>`) })
+      const meta = [l.district, l.rooms ? `${l.rooms} өрөө` : '', l.area ? `${l.area} м²` : ''].filter(Boolean).map((x) => esc(String(x))).join(' · ');
+      // VIP/Онцгой on top of ordinary pins where they overlap
+      L.marker([l.lat, l.lng], { riseOnHover: true, zIndexOffset: l.promo * 1000, icon: pinIcon(L, `<span class="map-pin ${cls}">${esc(fmtPrice(l.price).replace('₮', '').trim())}</span>`) })
         .bindPopup(
           `<a class="mp-card" href="/listing/${esc(l.id)}">` +
-            `<span class="mp-img"><img src="${esc(l.photos[0]?.src || NOIMG)}" alt="" loading="lazy"></span>` +
+            `<span class="mp-img"><img src="${esc(l.cover || NOIMG)}" alt="" loading="lazy"></span>` +
             `<span class="mp-body"><b class="mp-price">${esc(fmtPrice(l.price))}${l.dealType === 'rent' ? '<small> /сар</small>' : ''}</b>` +
             `<span class="mp-title">${esc(l.title)}</span>${meta ? `<span class="mp-meta">${meta}</span>` : ''}` +
             `<span class="mp-more">Дэлгэрэнгүй →</span></span></a>`,
           { className: 'mp-popup', minWidth: 240, maxWidth: 240, offset: [0, -34], closeButton: true },
         )
         .addTo(g);
-      pts.push([l.location.lat, l.location.lng]);
+      pts.push([l.lat, l.lng]);
     }
     if (pts.length) map.fitBounds(pts, { padding: [60, 60], maxZoom: 15 });
   };
