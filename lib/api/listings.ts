@@ -33,7 +33,7 @@ const keyOf = (src: string) => {
 };
 /** Photo URL: the public R2 URL when configured, else through the API. Panoramas stay on the API (`abs`):
  *  the 360° viewer loads them as WebGL textures, which needs CORS headers the r2.dev bucket doesn't send. */
-const photoUrl = (url: string) => (IMAGE_PUBLIC_URL && url.startsWith('/api/uploads/') ? `${IMAGE_PUBLIC_URL}/${keyOf(url)}` : abs(url));
+export const photoUrl = (url: string) => (IMAGE_PUBLIC_URL && url.startsWith('/api/uploads/') ? `${IMAGE_PUBLIC_URL}/${keyOf(url)}` : abs(url));
 
 const undef = <T,>(v: T | null) => (v === null ? undefined : v);
 // phone numbers of listings seen in this tab, so the "call" button needn't fetch the post again

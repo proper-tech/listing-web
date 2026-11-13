@@ -1,13 +1,14 @@
 'use client';
 // Profile page for signed-in agents and admins (/account).
-// The server has no profile-update endpoint yet, so name/phone/bio/photo edits are UI-only: they are kept in this
-// browser (localStorage, per user id) and shown on this page. Email changes stay with the admin (Админ → Агентууд).
+// Name, phone, company, bio and photo are saved to listing-server (PATCH /api/auth/me; the photo is uploaded to R2
+// first via POST /api/uploads). Email changes stay with the admin (Админ → Агентууд).
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { homeFor } from '@/lib/session';
 import { myListings, adminListings } from '@/lib/api/listings';
 import { myInquiries } from '@/lib/api/inquiries';
+import { updateProfile, uploadAvatar, type ProfilePatch } from '@/lib/api/auth';
 import { adminUsers } from '@/lib/mock/api';
 import { fmtDate } from '@/lib/format';
 import type { User } from '@/lib/types';
@@ -16,19 +17,13 @@ import { useToast } from './Toast';
 import ChangePassword from './ChangePassword';
 import PageLoader from '@/components/PageLoader';
 
+/** `photo` is the image shown: the saved avatar URL, a preview of a newly picked one, or '' for none. */
 interface Profile { name: string; phone: string; company: string; bio: string; photo: string }
-const KEY = (id: string) => `profile:${id}`;
-function loadProfile(u: User): Profile {
-  const base: Profile = { name: u.name, phone: u.phone, company: '', bio: '', photo: '' };
-  try { return { ...base, ...JSON.parse(localStorage.getItem(KEY(u.id)) || '{}') }; } catch { return base; }
-}
-function saveProfile(id: string, p: Profile) {
-  localStorage.setItem(KEY(id), JSON.stringify(p));
-}
+const profileOf = (u: User): Profile => ({ name: u.name, phone: u.phone, company: u.company ?? '', bio: u.bio ?? '', photo: u.avatar ?? '' });
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
 
-/** Downscale a picked photo to a 256px square JPEG data URL so it fits comfortably in localStorage. */
-function toAvatar(file: File): Promise<string> {
+/** Crop a picked photo to a centred square and downscale it to a 256px JPEG (small upload, fast avatar). */
+function toAvatar(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -37,7 +32,7 @@ function toAvatar(file: File): Promise<string> {
       const side = Math.min(img.width, img.height);
       c.getContext('2d')!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, s, s);
       URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL('image/jpeg', .85));
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error('Зургийг боловсруулж чадсангүй'))), 'image/jpeg', .85);
     };
     img.onerror = () => reject(new Error('Зургийг уншиж чадсангүй'));
     img.src = URL.createObjectURL(file);
@@ -66,13 +61,19 @@ export default function Account({ next }: { next: string }) {
 
 function ProfilePage({ user }: { user: User }) {
   const toast = useToast();
+  const { setUser } = useAuth();
   const isAdmin = user.role === 'admin';
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [draft, setDraft] = useState<Profile | null>(null);
+  const profile = useMemo(() => profileOf(user), [user]);
+  const [draft, setDraft] = useState<Profile>(profile);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null); // newly picked photo, uploaded on save
+  const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState<{ total: number; active: number; views: number; inquiries: number; unread: number } | null>(null);
   const [admin, setAdmin] = useState<{ pending: number; listings: number; agents: number; inactive: number } | null>(null);
 
-  useEffect(() => { const p = loadProfile(user); setProfile(p); setDraft(p); }, [user]);
+  // after a save (or a fresh /me) the saved profile becomes the new starting point
+  useEffect(() => { setDraft(profile); setPhotoBlob(null); }, [profile]);
+  // preview URLs of picked photos are object URLs: free them when replaced
+  useEffect(() => () => { if (draft.photo.startsWith('blob:')) URL.revokeObjectURL(draft.photo); }, [draft.photo]);
 
   useEffect(() => {
     Promise.all([myListings().catch(() => []), myInquiries().catch(() => [])]).then(([ls, inq]) => setStats({
@@ -90,24 +91,46 @@ function ProfilePage({ user }: { user: User }) {
     }
   }, [isAdmin]);
 
-  if (!profile || !draft) return <PageLoader />;
   const dirty = JSON.stringify(profile) !== JSON.stringify(draft);
-  const set = <K extends keyof Profile>(k: K, v: Profile[K]) => setDraft((d) => d && { ...d, [k]: v });
+  const set = <K extends keyof Profile>(k: K, v: Profile[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
     if (!f.type.startsWith('image/')) return toast('Зөвхөн зураг сонгоно уу');
-    try { set('photo', await toAvatar(f)); } catch (err) { toast((err as Error).message); }
+    try {
+      const blob = await toAvatar(f);
+      setPhotoBlob(blob);
+      set('photo', URL.createObjectURL(blob));
+    } catch (err) { toast((err as Error).message); }
   };
-  const onSave = (e: React.FormEvent) => {
+  const onRemovePhoto = () => { setPhotoBlob(null); set('photo', ''); };
+  const onCancel = () => { setPhotoBlob(null); setDraft(profile); };
+  const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!draft.name.trim()) return toast('Нэрээ оруулна уу');
-    const clean = { ...draft, name: draft.name.trim(), phone: draft.phone.trim(), company: draft.company.trim(), bio: draft.bio.trim() };
-    try { saveProfile(user.id, clean); } catch { return toast('Хадгалж чадсангүй — зургийн хэмжээ хэт том байж магадгүй'); }
-    setProfile(clean); setDraft(clean);
-    toast('Профайл хадгалагдлаа');
+    if (saving) return;
+    const name = draft.name.trim(), phone = draft.phone.trim(), company = draft.company.trim(), bio = draft.bio.trim();
+    if (!name) return toast('Нэрээ оруулна уу');
+    if (phone && !/^[0-9+\-\s()]+$/.test(phone)) return toast('Утас зөвхөн тоо агуулна');
+    // send only what changed
+    const patch: ProfilePatch = {};
+    if (name !== profile.name) patch.name = name;
+    if (phone !== profile.phone) patch.phone = phone;
+    if (company !== profile.company) patch.company = company;
+    if (bio !== profile.bio) patch.bio = bio;
+    setSaving(true);
+    try {
+      if (photoBlob) patch.avatarKey = await uploadAvatar(photoBlob);
+      else if (!draft.photo && profile.photo) patch.avatarKey = null;
+      if (Object.keys(patch).length) await setUser(await updateProfile(patch));
+      else setDraft(profile); // only whitespace changed
+      toast('Профайл хадгалагдлаа');
+    } catch (err) {
+      toast((err as Error).message || 'Хадгалж чадсангүй');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const roleName = isAdmin ? 'Админ' : 'Агент';
@@ -163,7 +186,7 @@ function ProfilePage({ user }: { user: User }) {
             <div className="profile-photo-row">
               <div className="profile-avatar sm">{draft.photo ? <img src={draft.photo} alt="" /> : initials(draft.name)}</div>
               <label className="btn btn-sm">Зураг сонгох<input type="file" accept="image/*" hidden onChange={onPhoto} /></label>
-              {draft.photo && <button type="button" className="btn btn-sm" onClick={() => set('photo', '')}>Устгах</button>}
+              {draft.photo && <button type="button" className="btn btn-sm" onClick={onRemovePhoto}>Устгах</button>}
             </div>
             <div className="grid-fields">
               <label className="field"><span>Нэр</span><input type="text" value={draft.name} maxLength={60} onChange={(e) => set('name', e.target.value)} required /></label>
@@ -174,8 +197,8 @@ function ProfilePage({ user }: { user: User }) {
             <label className="field"><span>Имэйл (нэвтрэх)</span><input type="text" value={user.email} disabled /></label>
             <p className="muted small" style={{ marginTop: -6 }}>Имэйлээ солихыг админаас хүснэ үү.</p>
             <div className="profile-save">
-              <button className="btn btn-primary" disabled={!dirty}>Хадгалах</button>
-              {dirty && <button type="button" className="btn" onClick={() => setDraft(profile)}>Болих</button>}
+              <button className="btn btn-primary" disabled={!dirty || saving}>{saving ? 'Хадгалж байна…' : 'Хадгалах'}</button>
+              {dirty && !saving && <button type="button" className="btn" onClick={onCancel}>Болих</button>}
             </div>
           </form>
         </section>

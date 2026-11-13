@@ -71,6 +71,10 @@ export interface Listing {
 export type Role = 'admin' | 'agent';
 export interface User {
   id: string; name: string; email: string; phone: string; role: Role; active: boolean; createdAt: string; mustChangePassword: boolean;
+  /** Profile (/account) — from listing-server; absent on mock users */
+  company?: string; bio?: string;
+  /** Profile photo URL ('' = none) and its R2 key (null = none) */
+  avatar?: string; avatarKey?: string | null;
 }
 export interface AdminUser extends User { listings: number }
 
