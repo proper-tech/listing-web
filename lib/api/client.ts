@@ -13,7 +13,8 @@ import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 const isServer = typeof window === "undefined";
 
 export const API_BASE_URL = isServer
-  ? process.env.API_URL || "http://localhost:4000"
+  ? process.env.API_URL ||
+    "https://listing-server-api-testing.badralbaigalmaa7.workers.dev"
   : process.env.NEXT_PUBLIC_API_URL || "";
 
 /** Error thrown by every failed request: HTTP status (0 = no response) plus a message ready to show the user. */

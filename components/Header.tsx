@@ -57,6 +57,12 @@ export default function Header() {
           {user?.role === 'admin' && <Link href="/admin" className={onPage('admin')}>Админ</Link>}
         </nav>
         <div className="topbar-right">
+        {path === '/' && (
+          <Link href="/search" className="hs-btn" aria-label="Зар хайх">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            <span>Хайх</span>
+          </Link>
+        )}
         {!loading && (user ? (
           <div className="user-box">
             <Link href="/post" className="btn btn-primary post-btn">+ Зар нэмэх</Link>

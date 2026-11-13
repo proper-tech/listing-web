@@ -18,6 +18,9 @@ export interface TourRoom {
   startYaw: number;
   hotspots: Hotspot[];
   floorPlanPosition?: [number, number];
+  /** partial panorama (e.g. iPhone Pano): degrees covered horizontally / vertically. Absent = full 360° sphere */
+  haov?: number;
+  vaov?: number;
 }
 
 export interface Tour { startRoomId: string | null; rooms: TourRoom[] }

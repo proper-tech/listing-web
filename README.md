@@ -19,12 +19,11 @@ http://localhost:3000 нээнэ. Нэвтрэхийн тулд `listing-server`
 
 ## Mock өгөгдөл
 
-- [`lib/mock/seed.ts`](lib/mock/seed.ts) — 17 жишээ зар, 2 хэрэглэгч, 1 гомдол. Зургууд [`public/mock/`](public/mock) дотор.
+- [`lib/mock/seed.ts`](lib/mock/seed.ts) — 2 хэрэглэгч (админ агент удирдлагад). Жишээ зар байхгүй: зарууд `listing-server` API-аас ирнэ. [`public/mock/demo-capture/`](public/mock/demo-capture) — PostWizard-ийн туршилтын 12 зураг.
 - [`lib/mock/api.ts`](lib/mock/api.ts) — хайлт, зар нэмэх, админ гэх мэт "API"-г хөтөч дотор гүйцэтгэнэ. Нэвтэрсэн агентыг `mirrorSession()` mock DB-д тусгана (имэйлээр тааруулна).
   Өөрчлөлт (шинэ зар, агент, нууц үг...) хөтчийн IndexedDB-д хадгалагдана; тухайн хөтөч дээр л харагдана.
 - Оруулсан зураг data: URL болж зартайгаа хадгалагдана.
 - Анхны төлөвт буцаах: Админ самбар → "Mock өгөгдөл шинэчлэх" (эсвэл хөтчийн site data-г цэвэрлэх).
-- Зарын хуудасны SEO metadata нь зөвхөн жишээ заруудад ажиллана (шинэ зар хөтөч дотор л байдаг).
 
 ## Нэвтрэлт (зөвхөн админ, агент)
 
@@ -40,7 +39,6 @@ http://localhost:3000 нээнэ. Нэвтрэхийн тулд `listing-server`
 
 Нэвтрэлт `listing-server`-ийн `/api/auth/*` (login, logout, me, change-password)-аар явна. Сешн нь HttpOnly JWT cookie.
 Агент үүсгэх: `listing-server` дотор `npm run agent:create -- <email> "<нэр>" [admin|agent] --local` (түр нууц үг хэвлэнэ).
-`agent@example.com` нэртэй агент нэвтэрвэл mock-ийн жишээ агентлагийн 4 зарыг эзэмшинэ.
 
 Анх нэвтрэхдээ түр нууц үгээ заавал солино. Админ самбарын агент удирдлага одоохондоо mock (тэнд үүсгэсэн агент нэвтэрч чадахгүй).
 
@@ -58,7 +56,7 @@ app/                  Next.js хуудсууд
 components/           React компонентууд (TourViewer, Maps, PostWizard, ...)
 lib/                  Төрлүүд, тогтмолууд, localStorage, 360° холбогч (stitch.js)
   mock/               Mock өгөгдөл + mock API (IndexedDB)
-public/mock/          Жишээ зураг, 360° панорама
+public/mock/          PostWizard-ийн туршилтын зурагнууд (demo-capture)
 ```
 
 - **360° viewer:** Pannellum (CDN-ээс), **газрын зураг:** Leaflet + OpenStreetMap

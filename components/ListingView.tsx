@@ -89,6 +89,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
             <div className="kv"><span>Зарын дугаар</span><b>{l.id}</b></div>
             <div className="kv"><span>Нийтэлсэн</span><span>{fmtDate(l.createdAt)} ({timeAgo(l.createdAt)})</span></div>
             <div className="kv"><span>Үзсэн</span><span>{l.views}</span></div>
+            {user?.role === 'admin' && <Link className="btn btn-sm btn-block admin-edit-btn" href={`/admin/edit/${l.id}`}>✎ Зар засах (админ)</Link>}
             <ReportButton id={l.id} />
           </div>
         </aside>

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Tour } from '@/lib/types';
 import { getPannellum, type PannellumViewer } from '@/lib/pannellum';
+import { panoView } from '@/lib/pano';
 
 /** Multi-room 360° tour: hotspots between rooms, room chips, floor-plan mini map. */
 export default function TourViewer({ tour }: { tour: Tour }) {
@@ -12,7 +13,7 @@ export default function TourViewer({ tour }: { tour: Tour }) {
   const start = tour.startRoomId && ids.has(tour.startRoomId) ? tour.startRoomId : rooms[0]?.id;
   const [current, setCurrent] = useState(start);
   const [error, setError] = useState('');
-  const key = JSON.stringify(rooms.map((r) => [r.id, r.panorama?.src, r.startYaw, r.hotspots]));
+  const key = JSON.stringify(rooms.map((r) => [r.id, r.panorama?.src, r.startYaw, r.hotspots, r.haov, r.vaov]));
 
   useEffect(() => {
     if (!rooms.length || !el.current) return;
@@ -23,7 +24,7 @@ export default function TourViewer({ tour }: { tour: Tour }) {
       for (const r of rooms) {
         scenes[r.id] = {
           title: r.name + (r.source === 'ai' ? ' · AI-аар үүсгэсэн, зөвхөн санаа' : ''),
-          type: 'equirectangular', panorama: r.panorama!.src, yaw: r.startYaw || 0, hfov: 105,
+          type: 'equirectangular', panorama: r.panorama!.src, yaw: r.startYaw || 0, hfov: 105, ...panoView(r),
           hotSpots: r.hotspots.filter((h) => ids.has(h.targetRoomId)).map((h) => ({
             pitch: h.pitch, yaw: h.yaw, type: 'scene', sceneId: h.targetRoomId,
             text: h.label || rooms.find((x) => x.id === h.targetRoomId)!.name,

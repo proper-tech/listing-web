@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { adminListings, adminUpdateListing } from '@/lib/api/listings';
 // agents and reports have no API yet: they still live in the browser's mock store
-import { adminCreateUser, adminUpdateUser, adminUsers, dismissReports, listReports, resetMockData } from '@/lib/mock/api';
+import { adminCreateUser, adminUpdateUser, adminUsers, dismissReports, listReports } from '@/lib/mock/api';
 import type { AdminListing, AdminUser, Report } from '@/lib/types';
 import { CATS, NOIMG, PLACEMENTS, STATUS_MN } from '@/lib/constants';
 import { fmtDate, fmtPrice } from '@/lib/format';
@@ -61,10 +61,6 @@ export default function AdminPanel() {
     <>
       <div className="section-head" style={{ marginTop: 20 }}>
         <h1>Админ самбар</h1>
-        <button className="btn btn-sm" onClick={async () => {
-          if (!confirm('Mock агентууд, мэдээлэгдсэн гомдлыг анхны төлөвт буцаах уу? (Зарууд API-д тул устахгүй.)')) return;
-          await resetMockData(); window.location.href = '/';
-        }}>Mock өгөгдөл шинэчлэх</button>
       </div>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))' }}>
         <div className="panel"><div className="muted small">Нийт зар</div><div className="price">{data.items.length}</div></div>
@@ -97,6 +93,7 @@ export default function AdminPanel() {
                 {l.status !== 'active' && <button className="btn btn-sm btn-primary" onClick={() => act(l, { status: 'active' })}>Батлах</button>}{' '}
                 {l.status === 'pending' && <button className="btn btn-sm" onClick={() => act(l, { status: 'rejected' })}>Татгалзах</button>}{' '}
                 {l.status === 'active' && <button className="btn btn-sm" onClick={() => act(l, { status: 'pending' })}>Нуух</button>}{' '}
+                <Link className="btn btn-sm" href={`/admin/edit/${l.id}`}>Засах</Link>{' '}
                 <button className="btn btn-sm btn-danger" onClick={() => act(l, { action: 'delete' }, 'Зарыг бүр мөсөн устгах уу? Буцаах боломжгүй.')}>Устгах</button>
               </td>
             </tr>

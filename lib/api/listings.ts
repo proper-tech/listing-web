@@ -81,8 +81,19 @@ export async function searchListings(params: URLSearchParams | Record<string, st
     // negative values only make sense for floors (old URLs may still carry them)
     if (/(Min|Max)$/.test(k) && !k.startsWith('floor') && Number(v) < 0) return;
     if (k === 'sort') { if (SORT_MAP[v]) out.set('sort', SORT_MAP[v]); return; }
+    // "Хэдэн давхарт": one exact floor → the server's floor range
+    if (k === 'floor') { if (/^-?\d+$/.test(v)) { out.set('minFloor', v); out.set('maxFloor', v); } return; }
+    if (k === 'roomsMin') return; // handled below together with `rooms`
     if (PARAM_MAP[k]) out.set(PARAM_MAP[k], v);
   });
+  // "Өрөөний тоо: N+": the server only knows a room list (rooms=1,2,5 where 5 means 5+), so N+ becomes N..5,
+  // narrowed by any rooms already picked
+  const rMin = Math.min(5, Number(q.get('roomsMin')));
+  if (Number.isInteger(rMin) && rMin > 0) {
+    const plus = Array.from({ length: 6 - rMin }, (_, i) => rMin + i); // e.g. 3 → [3, 4, 5]
+    const picked = (out.get('rooms') || '').split(',').map(Number).filter((r) => plus.includes(r));
+    out.set('rooms', (picked.length ? picked : plus).join(','));
+  }
   if (!out.has('limit')) out.set('limit', '24');
   const r = await apiGet<PostList>(`/api/posts?${out}`);
   return { total: r.total, page: r.page, per: r.limit, items: r.posts.map(toListing) };
@@ -117,9 +128,10 @@ export interface NewListingInput {
 const n = (v: unknown) => (v === '' || v == null ? null : Number(v));
 const s = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
-export async function createListing(b: NewListingInput): Promise<{ id: string; status: ListingStatus }> {
+/** The wizard's form values → the server's post body (shared by create and admin edit). */
+function toApiBody(b: NewListingInput) {
   const tourRooms = (b.tour?.rooms ?? []).filter((r) => r.panorama?.src);
-  const body = {
+  return {
     title: b.title, description: b.description ?? '', dealType: b.dealType, category: b.category,
     district: b.location.district, khoroo: b.location.khoroo ?? '', address: b.location.address ?? '',
     lat: b.location.lat, lng: b.location.lng,
@@ -135,8 +147,19 @@ export async function createListing(b: NewListingInput): Promise<{ id: string; s
       ? { startRoomId: b.tour!.startRoomId, rooms: tourRooms.map((r) => ({ ...r, panorama: { ...r.panorama!, src: '/api/uploads/' + keyOf(r.panorama!.src) } })) }
       : null,
   };
-  const { post } = await apiPost<{ post: ApiPost }>('/api/posts', body);
+}
+
+export async function createListing(b: NewListingInput): Promise<{ id: string; status: ListingStatus }> {
+  const { post } = await apiPost<{ post: ApiPost }>('/api/posts', toApiBody(b));
   return { id: String(post.id), status: post.status };
+}
+
+/** Admin edit: rewrites the post's content. Placement is left out: changing it is a payment, not an edit,
+ *  and re-sending it would restart a paid VIP/Top period. Status is left as is. */
+export async function updateListing(id: string, b: NewListingInput): Promise<Listing> {
+  const { placement: _placement, ...body } = toApiBody(b);
+  const { post } = await apiPatch<{ post: ApiPost }>(`/api/posts/${id}`, body);
+  return toListing(post);
 }
 
 /** Every page of a list query (the server caps a page at 60). */

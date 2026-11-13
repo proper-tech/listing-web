@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CATS, CAT_KEYS, DISTRICTS } from '@/lib/constants';
 import { SITE } from '@/lib/site';
+import FooterSearchBtn from './FooterSearchBtn';
 
 const ico = {
   phone: <path d="M5 4h3.5l1.5 4-2 1.3a10 10 0 0 0 6.7 6.7L16 14l4 1.5V19a1 1 0 0 1-1 1A15 15 0 0 1 4 5a1 1 0 0 1 1-1z" />,
@@ -30,7 +31,7 @@ export default function Footer() {
           <h2>Хайж буй байраа <em>360°-аар</em> олоход бэлэн үү?</h2>
           <p>Худалдан авах, түрээслэх эсвэл зараа байршуулах — бүгдийг нэг дороос. Байрыг очиж үзэхээсээ өмнө өрөө бүрээр нь аялаарай.</p>
           <div className="sf-actions">
-            <Link href="/search" className="sf-btn sf-btn-primary"><Svg d={ico.search} />Зар хайх</Link>
+            <FooterSearchBtn icon={<Svg d={ico.search} />} />
             <Link href="/post" className="sf-btn sf-btn-ghost">Зар нэмэх<Svg d={ico.arrow} /></Link>
           </div>
           {SITE.phone && <p className="sf-call">Шууд залгах: <a href={`tel:${SITE.phone.replace(/[^\d+]/g, '')}`}>{SITE.phone}</a></p>}

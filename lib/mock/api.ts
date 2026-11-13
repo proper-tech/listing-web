@@ -243,8 +243,7 @@ export async function dismissReports(listingId: string): Promise<void> {
 /* ---------- auth ----------
    Sign-in itself is real now (lib/api/auth.ts → listing-server). Listings, "my ads" and the admin panel
    still run on this mock DB, which needs to know who is signed in: AuthProvider mirrors the real session
-   here. The agent is matched by email (so a real agent@… keeps the demo listings it owns), otherwise
-   added. Remove this once those features call the API too. */
+   here. The agent is matched by email, otherwise added. Remove this once those features call the API too. */
 export async function mirrorSession(user: User | null): Promise<void> {
   await write((db) => {
     if (!user) { db.sessionUserId = null; return; }

@@ -1,16 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { cloneElement, useEffect, useRef, useState } from 'react';
-import type { Category, DealType, Hotspot, Placement, SellerType, TourRoom, User } from '@/lib/types';
+import type { Category, DealType, Hotspot, Listing, Placement, SellerType, TourRoom, User } from '@/lib/types';
 import {
-  CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, ROOM_NAMES, type FieldKey,
+  CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, ROOM_NAMES, STATUS_MN, type FieldKey,
 } from '@/lib/constants';
-import { fmtFull, fmtPrice } from '@/lib/format';
-import { createListing } from '@/lib/api/listings';
+import { fmtDate, fmtFull, fmtPrice } from '@/lib/format';
+import { createListing, getListing, getPhone, updateListing } from '@/lib/api/listings';
+import PageLoader from './PageLoader';
 import { useAuth } from './Auth';
 import { canvasToBlob, resizeImage, upload } from '@/lib/images';
 import { getPannellum, type PannellumViewer } from '@/lib/pannellum';
 import { stitch } from '@/lib/stitch';
+import { PanoError, panoView, preparePano, vaovFor } from '@/lib/pano';
 import ListingCard from './ListingCard';
 import CatIcon from './CatIcon';
 import CaptureGuide from './CaptureGuide';
@@ -34,6 +36,18 @@ const newDraft = (user: User): Draft => ({
   location: { district: '', khoroo: '', address: '', lat: null, lng: null },
   sellerName: user.name, sellerPhone: user.phone, sellerType: 'agent', placement: 'free', payMethod: 'qpay',
 });
+/** An existing listing as a wizard draft (admin edit). Photos and 360° rooms are already uploaded, so they start "done". */
+const listingToDraft = (l: Listing, phone: string): Draft => ({
+  dealType: l.dealType, category: l.category, title: l.title, price: l.price ? String(l.price) : '', description: l.description || '',
+  fields: Object.fromEntries((Object.keys(FIELD_DEFS) as FieldKey[]).filter((k) => l[k] != null && l[k] !== '').map((k) => [k, String(l[k])])),
+  garage: !!l.garage, leasing: !!l.leasing, paymentTerms: l.paymentTerms?.length ? l.paymentTerms : ['Бэлэн'],
+  photos: l.photos.map((p, i) => ({ key: `p${i}`, preview: p.src, src: p.src, width: p.width, height: p.height, uploading: false })),
+  tour: { startRoomId: l.tour?.startRoomId ?? null, rooms: (l.tour?.rooms ?? []).map((r) => ({ ...r })) },
+  location: { district: l.location.district, khoroo: l.location.khoroo || '', address: l.location.address || '', lat: l.location.lat, lng: l.location.lng },
+  sellerName: l.sellerName, sellerPhone: phone, sellerType: l.sellerType, placement: l.placement, payMethod: 'qpay',
+});
+type EditInfo = { id: string; listing: Listing; initial: Draft };
+
 // Keeps an unfinished draft while the user browses other pages (until a full reload),
 // but never hands one user's draft to another.
 let draftCache: { userId: string; draft: Draft } | null = null;
@@ -43,20 +57,63 @@ const uid = () => Math.random().toString(36).slice(2, 8);
 
 type SetDraft = React.Dispatch<React.SetStateAction<Draft>>;
 
-export default function PostWizard() {
+/** New ad, or with `editId` the admin edit screen for an existing one (same steps, prefilled, no payment step). */
+export default function PostWizard({ editId }: { editId?: string }) {
   const { user } = useAuth();
-  return user ? <Wizard user={user} /> : null;
+  if (!user) return null;
+  return editId ? <EditLoader id={editId} user={user} /> : <Wizard user={user} />;
 }
 
-function Wizard({ user }: { user: User }) {
+function EditLoader({ id, user }: { id: string; user: User }) {
+  const [edit, setEdit] = useState<EditInfo | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let stale = false;
+    getListing(id)
+      .then(async (l) => {
+        const phone = await getPhone(id).catch(() => '');
+        if (!stale) setEdit({ id, listing: l, initial: listingToDraft(l, phone) });
+      })
+      .catch((e: Error) => { if (!stale) setError(e.message); });
+    return () => { stale = true; };
+  }, [id]);
+  if (error) return <div className="empty">{error} <Link href="/admin">Админ самбар руу буцах</Link></div>;
+  if (!edit) return <PageLoader />;
+  return <Wizard user={user} edit={edit} />;
+}
+
+/** The body createListing expects, from a draft. Shared by publish and (once wired) admin save. */
+const draftToInput = (d: Draft) => ({
+  dealType: d.dealType, category: d.category, title: d.title, price: d.price, description: d.description,
+  ...d.fields, garage: d.garage, leasing: d.leasing, paymentTerms: d.paymentTerms,
+  photos: d.photos.filter((p) => p.src).map((p) => ({ src: p.src, width: p.width, height: p.height })),
+  tour: {
+    startRoomId: d.tour.startRoomId,
+    rooms: d.tour.rooms.filter((r) => r.status === 'ready').map((r) => ({ id: r.id, name: r.name, source: r.source, panorama: r.panorama, startYaw: r.startYaw, hotspots: r.hotspots, haov: r.haov, vaov: r.vaov })),
+  },
+  location: d.location, sellerName: d.sellerName, sellerPhone: d.sellerPhone, sellerType: d.sellerType, placement: d.placement,
+});
+
+function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
   const toast = useToast();
-  const [d, setD] = useState<Draft>(() => (draftCache?.userId === user.id ? draftCache.draft : newDraft(user)));
+  const [d, setD] = useState<Draft>(() => edit ? edit.initial : (draftCache?.userId === user.id ? draftCache.draft : newDraft(user)));
+  // edit mode has no payment/publish step
+  const steps = edit ? STEP_NAMES.slice(0, -1) : STEP_NAMES;
+  const initialJson = useRef(edit ? JSON.stringify(edit.initial) : '');
+  const dirty = !!edit && JSON.stringify(d) !== initialJson.current;
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ id: string; status: string } | null>(null);
   const [tried, setTried] = useState<Record<number, boolean>>({}); // steps where "Дараах" was pressed: show every error
-  useEffect(() => { draftCache = { userId: user.id, draft: d }; }, [d, user.id]);
+  useEffect(() => { if (!edit) draftCache = { userId: user.id, draft: d }; }, [d, user.id, edit]);
+  // warn before closing the tab with unsaved edits
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
 
   function validate(s: number): string | null {
     if (s === 1) {
@@ -76,7 +133,7 @@ function Wizard({ user }: { user: User }) {
     }
     return null;
   }
-  const go = (s: number) => { setError(''); setStep(Math.max(0, Math.min(STEP_NAMES.length - 1, s))); window.scrollTo(0, 0); };
+  const go = (s: number) => { setError(''); setStep(Math.max(0, Math.min(steps.length - 1, s))); window.scrollTo(0, 0); };
   // on a failed step, mark it tried and move focus to the first invalid field so the user sees what to fix
   const fail = (s: number, e: string) => {
     setTried((t) => ({ ...t, [s]: true }));
@@ -88,20 +145,24 @@ function Wizard({ user }: { user: User }) {
   async function publish() {
     for (let s = 1; s <= 5; s++) { const e = validate(s); if (e) { go(s); fail(s, e); return; } }
     setBusy(true);
-    const body = {
-      dealType: d.dealType, category: d.category, title: d.title, price: d.price, description: d.description,
-      ...d.fields, garage: d.garage, leasing: d.leasing, paymentTerms: d.paymentTerms,
-      photos: d.photos.filter((p) => p.src).map((p) => ({ src: p.src, width: p.width, height: p.height })),
-      tour: {
-        startRoomId: d.tour.startRoomId,
-        rooms: d.tour.rooms.filter((r) => r.status === 'ready').map((r) => ({ id: r.id, name: r.name, source: r.source, panorama: r.panorama, startYaw: r.startYaw, hotspots: r.hotspots })),
-      },
-      location: d.location, sellerName: d.sellerName, sellerPhone: d.sellerPhone, sellerType: d.sellerType, placement: d.placement,
-    };
     try {
-      const res = await createListing(body);
+      const res = await createListing(draftToInput(d));
       draftCache = null;
       setDone(res);
+    } catch (e) { setError((e as Error).message); }
+    setBusy(false);
+  }
+
+  // Admin save: validates like publish, then PATCHes the post (server allows content edits for admins only)
+  async function save() {
+    if (!edit) return;
+    for (let s = 1; s <= 5; s++) { const e = validate(s); if (e) { go(s); fail(s, e); return; } }
+    setError('');
+    setBusy(true);
+    try {
+      await updateListing(edit.id, draftToInput(d));
+      initialJson.current = JSON.stringify(d); // saved state is the new baseline: "unsaved changes" clears
+      toast('Өөрчлөлт хадгалагдлаа');
     } catch (e) { setError((e as Error).message); }
     setBusy(false);
   }
@@ -124,20 +185,44 @@ function Wizard({ user }: { user: User }) {
 
   const Step = [StepCategory, StepDetails, StepPhotos, StepTour, StepLocation, StepContact, StepPublish][step];
   return (
-    <div className="wizard">
-      <div className="wiz-head">
-        <h1>Зар нэмэх</h1>
-        <span className="wiz-count">Алхам {step + 1} / {STEP_NAMES.length}</span>
-      </div>
-      <ol className="wsteps" aria-label="Зар нэмэх алхамууд">
-        {STEP_NAMES.map((n, i) => {
-          const state = i === step ? 'on' : i < step ? 'done' : '';
+    <div className={`wizard${edit ? ' wizard-edit' : ''}`}>
+      {edit ? (
+        <div className="edit-head">
+          <div className="edit-crumbs"><Link href="/admin">Админ самбар</Link> › Зар засах</div>
+          <div className="edit-title">
+            <div style={{ minWidth: 0 }}>
+              <h1>{d.title.trim() || 'Гарчиггүй зар'}</h1>
+              <div className="edit-meta">
+                <span>№ {edit.id}</span>
+                <span className={`edit-status st-${edit.listing.status}`}>{STATUS_MN[edit.listing.status]}</span>
+                <span>Нийтэлсэн {fmtDate(edit.listing.createdAt)}</span>
+                <span>{edit.listing.views} үзэлт</span>
+                <Link href={`/listing/${edit.id}`} target="_blank">Зарыг харах ↗</Link>
+              </div>
+            </div>
+            <div className="edit-actions">
+              <span className={`edit-state${dirty ? ' dirty' : ''}`}>{dirty ? 'Хадгалаагүй өөрчлөлт' : 'Өөрчлөлтгүй'}</span>
+              <Link className="btn" href="/admin">Болих</Link>
+              <button className="btn btn-primary" disabled={!dirty || busy} onClick={save}>{busy ? 'Хадгалж байна…' : 'Хадгалах'}</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="wiz-head">
+          <h1>Зар нэмэх</h1>
+          <span className="wiz-count">Алхам {step + 1} / {steps.length}</span>
+        </div>
+      )}
+      <ol className="wsteps" aria-label={edit ? 'Засах хэсгүүд' : 'Зар нэмэх алхамууд'}>
+        {steps.map((n, i) => {
+          // edit: every section is already filled, so any step can be opened directly
+          const state = i === step ? 'on' : edit || i < step ? 'done' : '';
           return (
             <li key={n} className={state}>
               <button type="button" aria-current={i === step ? 'step' : undefined}
-                onClick={() => { if (i <= step) go(i); else if (i === step + 1) next(); }}
-                disabled={i > step + 1} title={i > step + 1 ? 'Өмнөх алхмуудаа эхлээд бөглөнө үү' : undefined}>
-                <span className="dot">{i < step ? '✓' : i + 1}</span>
+                onClick={() => { if (edit || i <= step) go(i); else if (i === step + 1) next(); }}
+                disabled={!edit && i > step + 1} title={!edit && i > step + 1 ? 'Өмнөх алхмуудаа эхлээд бөглөнө үү' : undefined}>
+                <span className="dot">{i === step ? i + 1 : edit || i < step ? '✓' : i + 1}</span>
                 <span className="lbl">{n}</span>
               </button>
             </li>
@@ -148,7 +233,12 @@ function Wizard({ user }: { user: User }) {
       {error && !(step === 1 && !validate(1)) && <div className="error-box" role="alert" style={{ marginTop: 12 }}>{error}</div>}
       <div className="wizard-nav">
         <button className="btn" disabled={step === 0} onClick={() => go(step - 1)}>‹ Буцах</button>
-        {step < STEP_NAMES.length - 1
+        {edit ? (
+          <div className="wizard-nav-r">
+            {step < steps.length - 1 && <button className="btn" onClick={() => go(step + 1)}>Дараах ›</button>}
+            <button className="btn btn-primary" disabled={!dirty || busy} onClick={save}>{busy ? 'Хадгалж байна…' : 'Хадгалах'}</button>
+          </div>
+        ) : step < steps.length - 1
           ? <button className="btn btn-primary" onClick={next}>Дараах ›</button>
           : <button className="btn btn-accent" disabled={busy} onClick={publish}>{busy ? 'Илгээж байна…' : 'Нийтлэх'}</button>}
       </div>
@@ -414,16 +504,19 @@ function StepTour({ d, setD, toast }: StepProps) {
 
   async function addModeA(file?: File) {
     if (!file) return;
+    // full 360° sphere (2:1) or a wide phone panorama (iPhone Pano), see lib/pano.ts
+    const id = uid();
     try {
-      const r = await resizeImage(file, 6000);
-      const ratio = r.origW / r.origH;
-      if (ratio < 1.95 || ratio > 2.05) { toast(`Энэ зураг 360° (2:1) биш байна: ${r.origW}×${r.origH}. "Энгийн зургуудаас холбох" аргыг ашиглана уу.`); return; }
-      const id = uid();
-      addRoom({ id, name: takeName(), source: 'upload360', status: 'processing', progress: 0.5, progressText: 'Илгээж байна', hotspots: [], startYaw: 0 });
+      const r = await preparePano(file);
+      addRoom({ id, name: takeName(), source: 'upload360', status: 'processing', progress: 0.5, progressText: 'Илгээж байна', hotspots: [], startYaw: 0, haov: r.haov, vaov: r.vaov });
       const src = await upload(r.blob);
       updRoom(id, { panorama: { src, width: r.width, height: r.height }, status: 'ready' });
       setEditId(id);
-    } catch (err) { toast((err as Error).message); }
+      if (r.haov) toast(`Панорама: ойролцоогоор ${r.haov}° хамарсан гэж тооцлоо. Буруу бол "Засах" хэсэгт тохируулна уу.`);
+    } catch (err) {
+      if (!(err instanceof PanoError)) updRoom(id, { status: 'failed', error: (err as Error).message });
+      toast((err as Error).message);
+    }
   }
 
   async function runStitch(room: DraftRoom) {
@@ -478,7 +571,7 @@ function StepTour({ d, setD, toast }: StepProps) {
           <div className="grow">
             <b>{r.name}</b> <span className={`status ${r.status}`}>{{ ready: 'Бэлэн', processing: 'Боловсруулж байна', failed: 'Амжилтгүй' }[r.status]}</span>
             <div className="muted small">
-              {{ upload360: 'Бэлэн 360°', stitched: 'Зургуудаас холбосон', ai: 'AI', splat: '3D' }[r.source]}
+              {r.vaov ? `Панорама · ${r.haov}°` : { upload360: 'Бэлэн 360°', stitched: 'Зургуудаас холбосон', ai: 'AI', splat: '3D' }[r.source]}
               {r.photoCount ? ` · ${r.photoCount} зураг` : ''}{r.hotspots.length ? ` · ${r.hotspots.length} сум` : ''}
             </div>
             {r.status === 'processing' && <>
@@ -513,13 +606,13 @@ function StepTour({ d, setD, toast }: StepProps) {
             <datalist id="roomNames">{ROOM_NAMES.map((n) => <option key={n} value={n} />)}</datalist></label>
           <label className="field"><span>Арга</span>
             <select value={mode} onChange={(e) => setMode(e.target.value as 'A' | 'B')}>
-              <option value="B">Энгийн зургуудаас холбох (8–16 зураг)</option><option value="A">Бэлэн 360° зураг (2:1)</option>
+              <option value="B">Энгийн зургуудаас холбох (8–16 зураг)</option><option value="A">Бэлэн 360° эсвэл утасны панорама</option>
             </select></label>
         </div>
         {mode === 'A' ? (
           <label className="dropzone">
             <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { addModeA(e.target.files?.[0]); e.target.value = ''; }} />
-            <div style={{ fontSize: 24 }}>🌐</div><b>360° зураг сонгох</b><div className="muted small">Equirectangular, өргөн = 2 × өндөр (жишээ нь 6000×3000)</div>
+            <div style={{ fontSize: 24 }}>🌐</div><b>360° зураг эсвэл панорама сонгох</b><div className="muted small">360° камерын зураг (өргөн = 2 × өндөр), эсвэл iPhone/Android-ын «Pano» горимоор авсан өргөн зураг</div>
           </label>
         ) : (
           <>
@@ -576,7 +669,7 @@ function RoomEditor({ room, others, onChange, onClose, toast }: {
     getPannellum().then((pannellum) => {
       if (cancelled) return;
       viewer.current = pannellum.viewer(node, {
-        type: 'equirectangular', panorama: room.panorama!.src, autoLoad: true, yaw: yawRef.current, hfov: 100, compass: false,
+        type: 'equirectangular', panorama: room.panorama!.src, autoLoad: true, yaw: yawRef.current, hfov: 100, compass: false, ...panoView(room),
         hotSpots: room.hotspots.map((h) => ({ pitch: h.pitch, yaw: h.yaw, type: 'info', text: '→ ' + h.label })),
       });
     }).catch((e: Error) => toast(e.message));
@@ -587,12 +680,34 @@ function RoomEditor({ room, others, onChange, onClose, toast }: {
       try { if (viewer.current) { yawRef.current = viewer.current.getYaw(); viewer.current.destroy(); } } catch { /* ignore */ }
       viewer.current = null;
     };
-  }, [room.panorama?.src, hsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [room.panorama?.src, hsKey, room.haov]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Partial panorama: the seller corrects how far around the photo reaches. Arrows and the start
+  // direction are stored in degrees, so they are rescaled to stay on the same spot in the image.
+  const [haovDraft, setHaovDraft] = useState(room.haov ?? 360);
+  const applyHaov = (h: number) => {
+    if (!room.haov || !room.panorama || h === room.haov) return;
+    const k = h / room.haov;
+    yawRef.current *= k;
+    onChange({
+      haov: h, vaov: vaovFor(h, room.panorama.width, room.panorama.height), startYaw: Math.round(room.startYaw * k),
+      hotspots: room.hotspots.map((x) => ({ ...x, yaw: x.yaw * k, pitch: x.pitch * k })),
+    });
+  };
 
   return (
     <div className="editor">
       <b>{room.name}</b> — чирж эргүүлж үзнэ үү
       <div className={`pano ${picking ? 'picking' : ''}`} style={{ marginTop: 8 }}><div ref={el} style={{ width: '100%', height: '100%' }} /></div>
+      {room.vaov && (
+        <div className="pano-angle">
+          <label htmlFor={`haov-${room.id}`}>Панорама хэр өргөн вэ? <b>{haovDraft === 360 ? 'Бүтэн тойрог (360°)' : `${haovDraft}°`}</b></label>
+          <input id={`haov-${room.id}`} type="range" min={90} max={360} step={5} value={haovDraft}
+            onChange={(e) => setHaovDraft(Number(e.target.value))}
+            onPointerUp={() => applyHaov(haovDraft)} onKeyUp={() => applyHaov(haovDraft)} onBlur={() => applyHaov(haovDraft)} />
+          <span className="muted small">Утасны панорама өнцгөө хадгалдаггүй тул ойролцоогоор тооцсон. Өрөөний зүйлс хэт өргөн эсвэл шахагдсан харагдвал тохируулна уу. Эхлэл, төгсгөл нь нийлж байвал 360°.</span>
+        </div>
+      )}
       <div className="editor-tools">
         <button className="btn btn-sm" onClick={() => { const y = Math.round(viewer.current?.getYaw() ?? 0); onChange({ startYaw: y }); toast(`Эхлэх чиглэл: ${y}°`); }}>🧭 Одоогийн чиглэлийг эхлэл болгох</button>
         {others.length ? <>
