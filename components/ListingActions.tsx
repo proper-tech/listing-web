@@ -6,8 +6,9 @@ import { REPORT_REASON_MN } from '@/lib/constants';
 import { useToast } from './Toast';
 import FavButton from './FavButton';
 import Icon from './Icon';
+import ShareDialog from './ShareDialog';
 
-export function PhoneAndFav({ id, title }: { id: string; title: string }) {
+export function PhoneAndFav({ id, title, image }: { id: string; title: string; image?: string }) {
   const toast = useToast();
   const [phone, setPhone] = useState<string | null>(null);
   // Утасны дугаарыг зар нээгдэхэд шууд харуулна (товч дарах шаардлагагүй).
@@ -18,13 +19,10 @@ export function PhoneAndFav({ id, title }: { id: string; title: string }) {
     return () => { stale = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-  const share = async () => {
-    const url = window.location.href;
-    try {
-      if (navigator.share) await navigator.share({ title, url });
-      else { await navigator.clipboard.writeText(url); toast('Холбоосыг хууллаа'); }
-    } catch { /* cancelled */ }
-  };
+  // Хуваалцах: сайтын өөрийн загвартай цонх (ShareDialog)
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const share = () => { setShareUrl(window.location.href.split('#')[0]); setShareOpen(true); };
   return (
     <>
       {phone
@@ -34,6 +32,7 @@ export function PhoneAndFav({ id, title }: { id: string; title: string }) {
         <FavButton id={id} variant="button" />
         <button className="btn btn-block" onClick={share}><Icon name="share" /> Хуваалцах</button>
       </div>
+      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={title} url={shareUrl} image={image} />
     </>
   );
 }

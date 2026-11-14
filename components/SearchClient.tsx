@@ -89,9 +89,11 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
     setFailed(false);
     const setTabCounts = (d?: { sale: number; rent: number }) => { if (d) setCounts({ '': d.sale + d.rent, sale: d.sale, rent: d.rent }); };
     // Газрын зураг: хуудаслалгүй, бүх тохирох зарын хөнгөн тэмдэг (GET /api/posts/pins, 1000 хүртэл)
+    // Газрын зургийн харагдацад газрын зургийн доор зарын картуудыг мөн харуулна (хуудаслалттай).
+    const list = searchListings(apiQ).then((r) => { if (!stale) { setRes(r); setTabCounts(r.dealCounts); } });
     const req = view === 'map'
-      ? searchPins(apiQ).then((r) => { if (!stale) { setPins(r); setTabCounts(r.dealCounts); } })
-      : searchListings(apiQ).then((r) => { if (!stale) { setRes(r); setTabCounts(r.dealCounts); } });
+      ? Promise.all([searchPins(apiQ).then((r) => { if (!stale) setPins(r); }), list])
+      : list;
     req.catch(() => { if (!stale) setFailed(true); });
     return () => { stale = true; };
   }, [q, view, attempt]);
@@ -120,7 +122,11 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
   const pages = Math.ceil(res.total / res.per);
   const shownTotal = view === 'map' ? pins?.total : result?.total;
   const changeView = (v: 'list' | 'map') => { setView(v); store.set('view', v); };
-  const goPage = (n: number) => { setQ((p) => { const x = new URLSearchParams(p); x.set('page', String(n)); return x; }); window.scrollTo(0, 0); };
+  const goPage = (n: number) => { setQ((p) => { const x = new URLSearchParams(p); x.set('page', String(n)); return x; });
+    // Газрын зургийн харагдацад жагсаалтын эхэнд, бусад үед хуудасны эхэнд гүйлгэнэ.
+    const head = document.querySelector('.map-list-head');
+    if (head) head.scrollIntoView({ behavior: 'smooth', block: 'start' }); else window.scrollTo(0, 0);
+  };
   const v = (k: string) => q.get(k) || '';
   const advCount = useMemo(() => {
     const s = new Set(ADV_KEYS.filter((k) => q.get(k)).map((k) => k.replace(/(Min|Max)$/, '')));
@@ -133,6 +139,22 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
       <NumField name={lo} initial={v(lo)} placeholder={ph[0]} unit={unit} maxLen={maxLen} onValue={setNum} />
       <NumField name={hi} initial={v(hi)} placeholder={ph[1]} unit={unit} maxLen={maxLen} onValue={setNum} />
     </div>
+  );
+
+  const listView = (
+        <>
+          <Grid items={res.items} empty="Тохирох зар олдсонгүй. " />
+          {pages > 1 && (
+            <nav className="pager" aria-label="Хуудас">
+              <button className="btn btn-sm" disabled={page <= 1} onClick={() => goPage(page - 1)} aria-label="Өмнөх хуудас">‹</button>
+              {pageList(page, pages).map((n, i) => n === '…'
+                ? <span key={`gap${i}`} className="pager-gap" aria-hidden="true">…</span>
+                : <button key={n} className={`btn btn-sm ${n === page ? 'btn-primary' : ''}`} aria-current={n === page ? 'page' : undefined}
+                    onClick={() => goPage(n)}>{n}</button>)}
+              <button className="btn btn-sm" disabled={page >= pages} onClick={() => goPage(page + 1)} aria-label="Дараагийн хуудас">›</button>
+            </nav>
+          )}
+        </>
   );
 
   return (
@@ -240,22 +262,12 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
         )}
         {!pins.pins.length && <div className="empty">Тохирох зар олдсонгүй.</div>}
         <ResultsMap items={pins.pins} />
+        {pins.pins.length > 0 && <>
+          <h2 className="map-list-head">Газрын зураг дээрх зарууд</h2>
+          {!result ? <PageLoader /> : listView}
+        </>}
       </>)
-      : !result ? <PageLoader /> : (
-        <>
-          <Grid items={res.items} empty="Тохирох зар олдсонгүй. " />
-          {pages > 1 && (
-            <nav className="pager" aria-label="Хуудас">
-              <button className="btn btn-sm" disabled={page <= 1} onClick={() => goPage(page - 1)} aria-label="Өмнөх хуудас">‹</button>
-              {pageList(page, pages).map((n, i) => n === '…'
-                ? <span key={`gap${i}`} className="pager-gap" aria-hidden="true">…</span>
-                : <button key={n} className={`btn btn-sm ${n === page ? 'btn-primary' : ''}`} aria-current={n === page ? 'page' : undefined}
-                    onClick={() => goPage(n)}>{n}</button>)}
-              <button className="btn btn-sm" disabled={page >= pages} onClick={() => goPage(page + 1)} aria-label="Дараагийн хуудас">›</button>
-            </nav>
-          )}
-        </>
-      )}
+      : !result ? <PageLoader /> : listView}
     </div>
   );
 }

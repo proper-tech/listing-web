@@ -1253,3 +1253,122 @@ img.is-uploading { opacity: .5; }
   .admin-table td img { width: 100%; height: auto; aspect-ratio: 3 / 2; }
   .admin-table tr:hover td { background: none; }
 }
+
+/* ================= "Миний зар": ирсэн хүсэлтүүд (шинэ загвар) ================= */
+.inbox { margin-top: 40px; }
+.inbox-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.inbox-head h2 { margin: 0 0 4px; }
+.inbox-head p { margin: 0; }
+.inbox-stats { display: flex; gap: 8px; }
+.inbox-stats span { display: inline-flex; align-items: baseline; gap: 5px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); color: var(--muted); font-size: var(--fs-sm); }
+.inbox-stats b { color: var(--text); font-size: var(--fs-md); }
+.inbox-stats .inbox-new { border-color: var(--brand); background: #c39a3e1f; color: var(--brand-text); }
+.inbox-stats .inbox-new b { color: var(--brand-text); }
+
+.inbox-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.inq-card { position: relative; padding: 20px 22px; border: 1px solid #1f1b141f; border-radius: var(--r-lg); background: var(--surface);
+  box-shadow: 0 1px 2px #3a2c180d; transition: box-shadow .2s, border-color .2s; }
+.inq-card:hover { box-shadow: 0 16px 34px -24px #3a2c1880; border-color: #1f1b1430; }
+.inq-card.unread { border-color: #c39a3e80; }
+.inq-card.unread::before { content: ""; position: absolute; left: -1px; top: 18px; bottom: 18px; width: 3px; border-radius: 0 3px 3px 0; background: var(--brand); }
+
+.inq-card-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; }
+.inq-avatar { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(150deg, var(--gold-400, #d4ad5a), var(--gold-700, #8a6a2a));
+  color: #1a1408; font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+.inq-who { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.inq-name { display: flex; align-items: center; gap: 8px; }
+.inq-name b { font-size: var(--fs-lg); font-weight: 600; letter-spacing: -.01em; }
+.inq-pill { padding: 2px 8px; border-radius: var(--r-pill); background: var(--brand); color: var(--on-brand); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.inq-listing { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--muted); font-size: var(--fs-sm); text-decoration: none; }
+.inq-listing svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
+.inq-listing span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inq-listing:hover { color: var(--brand-text); }
+.inq-time { align-self: start; color: var(--muted); font-size: var(--fs-sm); white-space: nowrap; }
+
+.inq-msg { margin: 16px 0 0 58px; padding: 12px 16px; border-radius: 4px var(--r-md) var(--r-md) var(--r-md); background: #f4ede0; color: var(--text);
+  font-size: var(--fs-md); line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.inq-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 0 58px; }
+.inq-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid #1f1b1424; border-radius: var(--r-pill);
+  background: #fffdf8; color: var(--text); font-size: var(--fs-base); font-weight: 600; text-decoration: none; transition: border-color .15s, background .15s, color .15s; }
+.inq-btn:hover { border-color: var(--brand); color: var(--brand-text); }
+.inq-btn .ico { color: #1a1408; }
+.inq-btn-call { border-color: var(--brand); background: var(--brand); color: #1a1408; font-variant-numeric: tabular-nums; letter-spacing: .02em; box-shadow: 0 6px 14px -8px #c39a3ecc; }
+.inq-btn-call:hover { background: #d4ad5a; color: #1a1408; }
+.inq-link { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; text-decoration: none; }
+.inq-link svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.inq-link:hover { color: var(--brand-text); }
+.inq-link:hover svg { transform: translateX(3px); }
+
+.inbox-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 20px; border: 1px dashed #1f1b142e; border-radius: var(--r-lg); text-align: center; }
+.inbox-empty-ico { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 4px; border-radius: 50%; background: #c39a3e1f; color: var(--brand-text); }
+.inbox-empty p { margin: 0; }
+
+@media (max-width: 640px) {
+  .inq-card { padding: 16px; }
+  .inq-msg, .inq-actions { margin-left: 0; }
+  .inq-link { margin-left: 0; }
+  .inq-btn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Хайлт: газрын зургийн доорх зарын жагсаалт */
+.map-list-head { margin: 32px 0 16px; font-size: 22px; letter-spacing: -.01em; }
+
+/* ================= Зар хуваалцах цонх ================= */
+.sh { width: min(520px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 26px; background: transparent; color: var(--text); overflow: visible; }
+.sh::backdrop { background: radial-gradient(circle at 50% 40%, #1a150ecc, #0b0906e6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.sh[open] { animation: shIn .28s cubic-bezier(.2,.8,.2,1); }
+.sh[open]::backdrop { animation: shFade .28s ease-out; }
+@keyframes shIn { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes shFade { from { opacity: 0; } to { opacity: 1; } }
+.sh-box:focus { outline: none; }
+.sh-box { overflow: hidden; border-radius: 26px; background: #fbf8f0; box-shadow: 0 50px 100px -30px #000000b3, 0 0 0 1px #ffffff14; }
+
+.sh-cover { position: relative; height: 190px; display: flex; align-items: flex-end; padding: 22px 24px; background: #2b2418 center/cover no-repeat; color: #fff; }
+.sh-cover::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #0000 25%, #0d0b08d9 100%); }
+.sh-cover-text { position: relative; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.sh-kicker { display: inline-flex; align-items: center; gap: 8px; color: var(--gold-300, #e2c47a); font-size: 11.5px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
+.sh-kicker::before { content: ""; width: 22px; height: 1px; background: currentColor; }
+.sh-cover h3 { margin: 0; font-size: 24px; font-weight: 600; line-height: 1.2; letter-spacing: -.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 12px #0006; }
+.sh-price { align-self: flex-start; padding: 4px 12px; border-radius: 999px; background: var(--brand); color: #1a1408; font-size: 14px; font-weight: 700; }
+.sh-x { position: absolute; top: 14px; right: 14px; z-index: 1; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #ffffff40; border-radius: 50%;
+  background: #0000004d; color: #fff; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer; transition: background .15s, transform .15s; }
+.sh-x:hover { background: #00000080; transform: rotate(90deg); }
+.sh-x:focus { outline: none; } .sh-x:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.sh-body { padding: 24px 24px 24px; }
+.sh-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px 6px; }
+.sh-item { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-decoration: none; cursor: pointer; }
+.sh-ico { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; color: #fff;
+  box-shadow: 0 10px 22px -12px #000000a6, inset 0 1px 0 #ffffff33; transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s; }
+.sh-ico svg { width: 25px; height: 25px; }
+.sh-item:hover .sh-ico, .sh-item:focus-visible .sh-ico { transform: translateY(-3px) scale(1.06); box-shadow: 0 16px 26px -12px #000000b3, inset 0 1px 0 #ffffff33; }
+.sh-item:focus { outline: none; } .sh-item:focus-visible .sh-ico { outline: 2px solid var(--brand); outline-offset: 3px; }
+.sh-ico-app { box-shadow: 0 10px 22px -14px #00000080, inset 0 0 0 1px #1f1b141a; }
+.sh-ico svg.sh-art { width: 100%; height: 100%; }
+.sh-ico svg.sh-art-gm { width: 30px; height: 30px; }
+.sh-ico svg.sh-art-ig { width: 30px; height: 30px; }
+.sh-ico-sq { border-radius: 16px; }
+.sh-ico-more { background: #ece4d2; color: var(--text); box-shadow: none; }
+.sh-lbl { font-size: 12.5px; font-weight: 500; color: var(--muted); transition: color .15s; }
+.sh-item:hover .sh-lbl { color: var(--text); }
+
+.sh-sep { display: flex; align-items: center; gap: 12px; margin: 24px 0 14px; color: var(--muted); font-size: 12px; letter-spacing: .04em; }
+.sh-sep::before, .sh-sep::after { content: ""; flex: 1; height: 1px; background: #1f1b141f; }
+
+.sh-copy { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 16px; border: 1px solid #1f1b1424; border-radius: 999px; background: #fffdf8; color: var(--muted); transition: border-color .2s, box-shadow .2s; }
+.sh-copy:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px #c39a3e29; }
+.sh-copy input { flex: 1; min-width: 0; height: 40px; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 14px; outline: none; }
+.sh-copy button { display: inline-flex; align-items: center; gap: 7px; height: 42px; padding: 0 22px; border: 0; border-radius: 999px; background: #2b2418; color: #f6efe0;
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .2s; }
+.sh-copy button:hover { background: #3d3324; }
+.sh-copy.ok { border-color: #3a9a5b; }
+.sh-copy.ok button { background: #2f8a4f; }
+
+@media (max-width: 480px) {
+  .sh-cover { height: 160px; padding: 18px; }
+  .sh-cover h3 { font-size: 20px; }
+  .sh-body { padding: 20px 16px; }
+  .sh-grid { grid-template-columns: repeat(4, 1fr); }
+  .sh-ico { width: 52px; height: 52px; }
+}
