@@ -3,6 +3,7 @@ import type { Listing } from '@/lib/types';
 import { CATS, NOIMG, STATUS_MN } from '@/lib/constants';
 import { fmtFloor, fmtPrice } from '@/lib/format';
 import FavButton from './FavButton';
+import Icon from './Icon';
 
 type CardListing = Pick<Listing, 'id' | 'title' | 'price' | 'dealType' | 'category' | 'rooms' | 'area' | 'floor' | 'buildingFloors' | 'photos' | 'location' | 'createdAt' | 'hasTour' | 'promo'>
   & Partial<Pick<Listing, 'tour' | 'status'>>;
@@ -16,7 +17,7 @@ export function Badges({ l }: { l: CardListing }) {
     <>
       {l.promo === 2 && <span className="badge top">Онцгой</span>}
       {l.promo === 1 && <span className="badge vip">VIP</span>}
-      {l.hasTour && <span className="badge b360">360°</span>}
+      {l.hasTour && <span className="badge b360"><Icon name="tour" size={13} />360°</span>}
       {l.tour?.rooms.some((r) => r.source === 'ai') && <span className="badge ai">AI</span>}
       {l.status && l.status !== 'active' && <span className={`badge ${l.status}`}>{STATUS_MN[l.status]}</span>}
     </>
@@ -39,16 +40,14 @@ function specParts(l: CardListing): string[] {
 
 export default function ListingCard({ l, preview = false }: { l: CardListing; preview?: boolean }) {
   const specs = specParts(l);
+  const cover = coverImage(l);
   const body = (
     <>
-      <div className="card-img">
-        <img loading="lazy" src={coverImage(l)} alt="" />
+      <div className={`card-img${cover === NOIMG ? ' no-photo' : ''}`}>
+        <img loading="lazy" src={cover} alt="" />
         <div className="badges"><Badges l={l} /></div>
         {!preview && <div className="card-fav"><FavButton id={l.id} /></div>}
-        <div className="card-tags">
-          <span className={`tag-deal ${l.dealType}`}>{l.dealType === 'rent' ? 'Түрээс' : 'Зарна'}</span>
-          <span className="tag-cat">{CATS[l.category].name}</span>
-        </div>
+        <span className={`card-tag ${l.dealType}`}>{l.dealType === 'rent' ? 'Түрээс' : 'Зарна'} · {CATS[l.category].name}</span>
       </div>
       <div className="card-body">
         <div className="card-loc">
@@ -61,7 +60,6 @@ export default function ListingCard({ l, preview = false }: { l: CardListing; pr
         </div>
         <div className="card-foot">
           <div className="price"><Price l={l} /></div>
-          {!preview && <span className="card-more">Дэлгэрэнгүй<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>}
         </div>
       </div>
     </>

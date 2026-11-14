@@ -1,6 +1,7 @@
 export type Category = 'apartment' | 'house' | 'land' | 'office' | 'shop' | 'warehouse' | 'garage' | 'summer_house';
 export type DealType = 'sale' | 'rent';
-export type ListingStatus = 'draft' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected' | 'archived';
+/** unpaid = an agent's new listing waiting for its QPay payment (hidden; goes to admin review once paid) */
+export type ListingStatus = 'draft' | 'unpaid' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected' | 'archived';
 export type Placement = 'free' | 'vip' | 'top';
 export type SellerType = 'owner' | 'agent' | 'company';
 

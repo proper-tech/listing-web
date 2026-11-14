@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
 import { cloneElement, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Category, DealType, Hotspot, Listing, Placement, SellerType, TourRoom, User } from '@/lib/types';
 import {
-  CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, ROOM_NAMES, STATUS_MN, type FieldKey,
+  CATS, CAT_KEYS, CENTERS, DISTRICTS, FIELD_DEFS, FIELDS_BY_CAT, PAY_TERMS, PLACEMENTS, POSTING_FEE, ROOM_NAMES, STATUS_MN, type FieldKey,
 } from '@/lib/constants';
 import { fmtDate, fmtFull, fmtPrice } from '@/lib/format';
 import { createListing, getListing, getPhone, updateListing } from '@/lib/api/listings';
@@ -168,6 +169,7 @@ const draftToInput = (d: Draft) => ({
 
 function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
   const toast = useToast();
+  const router = useRouter();
   // where the starting draft came from: 'stored' shows the "draft restored" notice
   const [origin] = useState<'edit' | 'memory' | 'stored' | 'new'>(() =>
     edit ? 'edit' : draftCache?.userId === user.id ? 'memory' : loadStoredDraft(user) ? 'stored' : 'new');
@@ -264,6 +266,8 @@ function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
       draftCache = null;
       saveStoredDraft(user.id, null);
       dropAllLocal(user.id);
+      // agents pay (QPay) before the listing goes to admin review; admins publish straight away
+      if (res.status === 'unpaid') { router.push(`/pay/${res.id}`); return; }
       setDone(res);
     } catch (e) { setError((e as Error).message); }
     setSending(null);
@@ -367,7 +371,7 @@ function Wizard({ user, edit }: { user: User; edit?: EditInfo }) {
           </div>
         ) : step < steps.length - 1
           ? <button className="btn btn-primary" onClick={next}>Дараах ›</button>
-          : <button className="btn btn-accent" disabled={busy} onClick={publish}>{sending?.total ? `Зураг илгээж байна ${sending.done}/${sending.total}…` : busy ? 'Илгээж байна…' : 'Нийтлэх'}</button>}
+          : <button className="btn btn-accent" disabled={busy} onClick={publish}>{sending?.total ? `Зураг илгээж байна ${sending.done}/${sending.total}…` : busy ? 'Илгээж байна…' : user.role === 'admin' ? 'Нийтлэх' : 'Төлбөр төлөх ›'}</button>}
       </div>
     </div>
   );
@@ -918,31 +922,37 @@ function StepContact({ d, setD, user }: StepProps) {
 }
 
 /* ---------- 7. publish ---------- */
-function StepPublish({ d, setD }: StepProps) {
+function StepPublish({ d, setD, user }: StepProps) {
   const ready = d.tour.rooms.filter((r) => r.status === 'ready').length;
-  const tourFee = ready > 3 ? 10000 : 0;
-  const total = PLACEMENTS[d.placement].price + tourFee;
+  const isAdmin = user.role === 'admin';
+  // agents: posting fee + the chosen placement; admins: free. The server computes the real amount (src/pricing.ts).
+  const extra = PLACEMENTS[d.placement].price;
+  const total = POSTING_FEE + extra;
   return (
     <>
       <h2 className="mt-0">Нийтлэх</h2>
       <div className="placements">
         {(Object.keys(PLACEMENTS) as Placement[]).map((k) => (
           <button key={k} className={`tile ${d.placement === k ? 'on' : ''}`} onClick={() => setD((x) => ({ ...x, placement: k }))}>
-            <b>{PLACEMENTS[k].name}</b>{PLACEMENTS[k].price ? fmtFull(PLACEMENTS[k].price) : 'Үнэгүй'}<div className="muted small">{PLACEMENTS[k].note}</div>
+            <b>{PLACEMENTS[k].name}</b>
+            {isAdmin ? 'Төлбөргүй' : PLACEMENTS[k].price ? `+${fmtFull(PLACEMENTS[k].price)}` : 'Нэмэлт төлбөргүй'}
+            <div className="muted small">{PLACEMENTS[k].note}</div>
           </button>
         ))}
       </div>
-      <p>Зураг: <b>{d.photos.filter((p) => p.src).length}</b> · 360° өрөө: <b>{ready}</b>{tourFee > 0 && ` (3-аас олон өрөө: +${fmtFull(tourFee)})`}</p>
-      {total > 0 && <>
-        <h3>Төлбөрийн арга</h3>
-        <div className="chips">
-          {[['qpay', 'QPay'], ['socialpay', 'SocialPay'], ['card', 'Банкны карт']].map(([k, n]) => (
-            <button type="button" key={k} className={`chip ${d.payMethod === k ? 'on' : ''}`} onClick={() => setD((x) => ({ ...x, payMethod: k }))}>{n}</button>
-          ))}
+      <p>Зураг: <b>{d.photos.length}</b> · 360° өрөө: <b>{ready}</b></p>
+      {isAdmin ? (
+        <p className="ok-box">Админы зар төлбөргүй бөгөөд шууд нийтлэгдэнэ.</p>
+      ) : (
+        <div className="price-box">
+          <dl className="pay-items">
+            <div><dt>Зар байршуулах (30 хоног)</dt><dd>{fmtFull(POSTING_FEE)}</dd></div>
+            {extra > 0 && <div><dt>{PLACEMENTS[d.placement].name} (7 хоног)</dt><dd>{fmtFull(extra)}</dd></div>}
+            <div className="pay-total"><dt>Нийт</dt><dd>{fmtFull(total)}</dd></div>
+          </dl>
+          <p className="muted small mb-0">Дараагийн алхамд QPay-ээр (банкны апп, QR) төлнө. Төлбөр орсны дараа админ шалгаж баталмагц зар нийтлэгдэнэ; VIP/Онцгой-ийн 7 хоног тэр үеэс эхэлнэ.</p>
         </div>
-        <p className="ok-box mt-3">Нийт: <b>{fmtFull(total)}</b>. Энэ бол прототип — төлбөр жинхэнээр хийгдэхгүй, VIP/Онцгой шууд идэвхжинэ.</p>
-      </>}
-      <p className="muted small">Нийтэлсний дараа админ шалгаж баталсны дараа зар харагдана.</p>
+      )}
     </>
   );
 }

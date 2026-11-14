@@ -46,14 +46,17 @@ export const FIELDS_BY_CAT: Record<Category, FieldKey[]> = {
   summer_house: ['rooms', 'area', 'yearInUse', 'floorMaterial', 'windowType'],
 };
 
+/* Prices. The server is the source of truth (listing-server src/pricing.ts): change both together.
+   Agents pay POSTING_FEE for every listing (30 days) plus the placement's price; admins pay nothing. */
+export const POSTING_FEE = 10000;
 export const PLACEMENTS: Record<Placement, { name: string; price: number; note: string }> = {
-  free: { name: 'Энгийн зар', price: 0, note: '30 хоног, үнэгүй' },
-  vip: { name: 'VIP зар', price: 20000, note: '7 хоног, ангилал, хайлтын эхэнд' },
-  top: { name: 'Онцгой зар', price: 40000, note: '7 хоног, нүүр хуудсанд' },
+  free: { name: 'Энгийн зар', price: 0, note: '30 хоног' },
+  vip: { name: 'VIP зар', price: 20000, note: '+7 хоног ангилал, хайлтын эхэнд' },
+  top: { name: 'Онцгой зар', price: 40000, note: '+7 хоног нүүр хуудсанд' },
 };
 
 export const STATUS_MN: Record<ListingStatus, string> = {
-  pending: 'Хянагдаж буй', active: 'Идэвхтэй', expired: 'Хугацаа дууссан', sold: 'Зарагдсан', rejected: 'Татгалзсан', draft: 'Ноорог', archived: 'Архивласан',
+  unpaid: 'Төлбөр хүлээгдэж буй', pending: 'Хянагдаж буй', active: 'Идэвхтэй', expired: 'Хугацаа дууссан', sold: 'Зарагдсан', rejected: 'Татгалзсан', draft: 'Ноорог', archived: 'Архивласан',
 };
 
 /** Зарыг мэдээлэх шалтгаан (server: fake | duplicate | wrong_price | sold | other) → харуулах нэр. */
@@ -63,7 +66,8 @@ export const REPORT_REASON_MN: Record<string, string> = {
 
 export const ROOM_NAMES = ['Зочны өрөө', 'Гал тогоо', 'Унтлагын өрөө', 'Хүүхдийн өрөө', 'Угаалгын өрөө', 'Коридор', 'Тагт', 'Хашаа', 'Гадна тал'];
 
-export const NOIMG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><rect width="300" height="200" fill="#e9ecef"/><path d="M110 120l40-40 40 40v40h-80z" fill="#ced4da"/></svg>');
+/** "No photo" placeholder in the warm palette: a soft building outline on cream (used by cards, tables, map popups). */
+export const NOIMG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><rect width="300" height="200" fill="#efe8d8"/><g fill="none" stroke="#cdbf9f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M122 132V80l28-14 28 14v52M114 132h72"/><path d="M138 92h6M156 92h6M138 106h6M156 106h6M145 132v-12h10v12"/></g></svg>');
 
 export const PANNELLUM_JS = 'https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js';
 export const PANNELLUM_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css';

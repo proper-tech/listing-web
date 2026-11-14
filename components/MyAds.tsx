@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ApiError } from '@/lib/api/client';
 import { myListings, ownerAction, type OwnerAction } from '@/lib/api/listings';
 import type { Listing } from '@/lib/types';
 import { NOIMG, STATUS_MN } from '@/lib/constants';
@@ -15,6 +17,7 @@ const MSG: Record<OwnerAction, string> = { sold: 'Зарагдсан гэж тэ
 
 export default function MyAds() {
   const toast = useToast();
+  const router = useRouter();
   const { user } = useAuth();
   const [items, setItems] = useState<Listing[] | null>(null);
   const load = useCallback(async () => {
@@ -28,7 +31,11 @@ export default function MyAds() {
     try {
       await ownerAction(l.id, action, isAdmin);
       toast(action === 'restore' && !isAdmin ? 'Сэргээлээ — админ дахин шалгаад нийтэлнэ' : MSG[action]); load();
-    } catch (e) { toast((e as Error).message); }
+    } catch (e) {
+      // sending a listing for review needs it paid first: go and pay
+      if (e instanceof ApiError && e.status === 402) { toast('Эхлээд төлбөрөө төлнө үү'); router.push(`/pay/${l.id}`); return; }
+      toast((e as Error).message);
+    }
   };
 
   return (
@@ -46,7 +53,11 @@ export default function MyAds() {
               <td>{l.views}</td>
               <td>{fmtDate(l.createdAt)}</td>
               <td className="nowrap">
-                {(l.status === 'archived' || l.status === 'sold')
+                {l.status === 'unpaid'
+                  ? <Link className="btn btn-sm btn-primary" href={`/pay/${l.id}`}>Төлбөр төлөх</Link>
+                  : l.status === 'rejected'
+                  ? <button className="btn btn-sm" onClick={() => act(l, 'restore')}>Дахин хянуулах</button>
+                  : (l.status === 'archived' || l.status === 'sold')
                   ? <button className="btn btn-sm" onClick={() => act(l, 'restore')}>Сэргээх</button>
                   : <>
                       {l.status === 'active' && <button className="btn btn-sm" onClick={() => act(l, 'sold')}>Зарагдсан</button>}{' '}

@@ -38,7 +38,7 @@ input[type=text], input[type=number], input[type=tel], input[type=search], input
 .error-text { color: var(--danger); font-size: var(--fs-sm); }
 /* ===== end of base layer ===== */
 
-/* Light ProperTech look: cream #ebe2cc ground, one brass accent, square corners, page content on a big glass sheet.
+/* Light ProperTech look: warm porcelain ground (#f6f3ed), one brass accent, rounded cards, page content on a big glass sheet.
    The video hero keeps the dark palette (see .hero below). Mapped onto this app's original variable names. */
 :root {
   /* Company gold. One scale, everything else derives from it. */
@@ -46,7 +46,7 @@ input[type=text], input[type=number], input[type=tel], input[type=search], input
   --gold-500: #c39a3e; --gold-600: #a7802c; --gold-700: #7d5d1a; --gold-800: #5c4412;
   /* metallic fill for primary actions: light at the top-left, deep at the bottom-right */
   --gold-grad: linear-gradient(135deg, #ecd08a 0%, #d4ad57 38%, #c39a3e 62%, #a7802c 100%);
-  --bg: #f1eadb; --surface: #fcf9f2; --surface-2: #f3ecdb; --text: #1f1b14; --muted: #6b6151; --line: #1f1b1424;
+  --bg: #f6f3ed; --surface: #fffdf9; --surface-2: #f1ece2; --text: #1f1b14; --muted: #6b6151; --line: #1f1b1424;
   /* gold has two jobs: --brand is the FILL (buttons, ink, chips); --brand-text is gold used as TEXT on cream,
      darker so it passes contrast (≈5:1 on --bg; the fill colour would only be ≈2.3:1) */
   --brand: var(--gold-500); --brand-text: var(--gold-700); --brand-2: #c39a3e24; --on-brand: #1a1408; --accent: var(--gold-500); --vip: var(--gold-400); --top: #c4704f; --danger: #b3402e;
@@ -69,7 +69,7 @@ input[type=text], input[type=number], input[type=tel], input[type=search], input
   /* spacing steps */
   --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
   /* named neutrals that were repeated as raw values */
-  --surface-hi: #fffdf8; /* brightest card / field fill */
+  --surface-hi: #fffefb; /* brightest card / field fill */
   --ink: #2b2418; /* dark chip / selected-state fill */
   /* listing status colours, from the same warm family as the brand */
   --st-active: #3f7350; --st-pending: #8a7653; --st-sold: #3d3528; --st-expired: #b1a68f; --st-ai: #6a5a8c; --st-draft: #9a917f;
@@ -80,8 +80,8 @@ html, body { margin: 0; }
 html { overflow-x: clip; }
 /* soft warm glows behind everything: glass needs something to blur, a flat cream would make the sheet look like a plain box */
 body { font: 15px/1.6 var(--font); color: var(--text); -webkit-font-smoothing: antialiased;
-       background: radial-gradient(60vmax 60vmax at 0% 0%, #e2c47a66, transparent 60%), radial-gradient(55vmax 55vmax at 100% 45%, #d4ad5738, transparent 60%),
-                   radial-gradient(60vmax 50vmax at 30% 100%, #ffffffb3, transparent 60%), var(--bg);
+       background: radial-gradient(60vmax 60vmax at 0% 0%, #e2c47a2e, transparent 60%), radial-gradient(55vmax 55vmax at 100% 45%, #d4ad5717, transparent 60%),
+                   radial-gradient(60vmax 50vmax at 30% 100%, #ffffffcc, transparent 60%), var(--bg);
        background-attachment: fixed; }
 a { color: var(--brand-text); text-decoration: none; }
 a:hover { color: var(--text); }
@@ -328,9 +328,9 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
  /* normal case (was 11px ALL CAPS) */
 
 /* ---- Maps (components/Maps.tsx): CARTO/Esri tiles with Google-style controls, gold price pins, card popups ---- */
-.map { height: 620px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); background: #efe9dc;
+.map { height: 620px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); background: var(--surface-2);
        box-shadow: 0 1px 2px #3a2c180d, 0 18px 40px -28px #3a2c1866; }
-.leaflet-container { font-family: var(--font); background: #efe9dc; }
+.leaflet-container { font-family: var(--font); background: var(--surface-2); }
 /* hairline seams between tiles at fractional zoom / pixel ratios: overlap each tile by half a pixel */
 .map-tiles img.leaflet-tile { mix-blend-mode: normal; width: 256.5px !important; height: 256.5px !important; }
 /* price pin: gold pill with a small tail pointing at the spot */
@@ -385,7 +385,7 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
 .gm-style .mp-card { width: 240px; font-family: var(--font); font-size: var(--fs-base); line-height: 1.4; }
 .mp-card { display: block; color: var(--text); text-decoration: none !important; }
 .mp-card:hover { color: var(--text); }
-.mp-img { display: block; aspect-ratio: 16/10; background: #efe9dc; overflow: hidden; }
+.mp-img { display: block; aspect-ratio: 16/10; background: var(--surface-2); overflow: hidden; }
 .mp-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
 .mp-card:hover .mp-img img { transform: scale(1.04); }
 .mp-body { display: flex; flex-direction: column; gap: 3px; padding: 11px 14px 13px; }
@@ -428,7 +428,7 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
 .seller { display: flex; align-items: center; gap: 10px; }
 .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-2); color: var(--brand-text); display: grid; place-items: center; font-weight: 800; overflow: hidden; flex-shrink: 0; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mini-map { height: 260px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); background: #efe9dc; }
+.mini-map { height: 260px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); }
 .mini-map.gmap { height: 380px; background: #e5e3df; }
 .mini-map.gmap iframe { display: block; width: 100%; height: 100%; border: 0; }
 .kv { display: flex; justify-content: space-between; font-size: var(--fs-sm); color: var(--muted); }
@@ -627,7 +627,7 @@ html::-webkit-scrollbar-corner { background: transparent; }
 }
 
 /* ================= Header: илүү цэвэр, elegant загвар ================= */
-.topbar { border-radius: var(--r-lg); border: 1px solid #1f1b141f; background: #f7f1e4cc;
+.topbar { border-radius: var(--r-lg); border: 1px solid #1f1b141f; background: #fbf9f4d1;
           box-shadow: inset 0 1px 0 #ffffffd9, 0 1px 2px #3a2c180d, 0 18px 40px -22px #3a2c1866; }
 .topbar .topbar-inner { height: 64px; gap: 20px; }
 .topbar .logo { font-size: var(--fs-xl); font-weight: 700; letter-spacing: -.02em; gap: 10px; }
@@ -929,40 +929,45 @@ html::-webkit-scrollbar-corner { background: transparent; }
 .inbox-body p { margin: 0 0 12px; white-space: pre-wrap; line-height: 1.55; }
 .inbox-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* ================= Зарын карт (шинэ загвар) ================= */
+/* ================= Зарын карт ================= */
+/* Calm hierarchy: photo → title → specs → price. Sentence case everywhere (uppercase Cyrillic with tracking shouted,
+   and turned "м²" into "М²"); one rounded label on the photo; no dark gradient over photos. */
 .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 28px 24px; }
 .card { background: var(--surface); border: 1px solid #1f1b141f; border-radius: var(--r-md); overflow: hidden;
   box-shadow: 0 1px 2px #3a2c180d; transition: box-shadow .25s, transform .25s, border-color .25s; }
 .card:hover { box-shadow: 0 22px 44px -26px #3a2c1899; transform: translateY(-3px); border-color: #1f1b1430; }
 .card-img { aspect-ratio: 3/2; border-radius: 0; }
-.card-img::after { content: ""; position: absolute; inset: auto 0 0 0; height: 45%; background: linear-gradient(transparent, #0d0b0866); pointer-events: none; }
-.card .badges { z-index: 2; }
+.card-img.no-photo img { transform: none !important; }
+.card .badges { z-index: 2; left: 12px; top: 12px; gap: 6px; }
+.card .badges .badge { padding: 4px 10px; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .01em;
+  text-transform: none; box-shadow: 0 1px 4px #0000001f; }
 .card-fav { position: absolute; top: 10px; right: 10px; z-index: 2; }
 .card-fav .fav { width: 36px; height: 36px; margin: 0; background: #fffdf8e6; color: var(--text); box-shadow: 0 2px 8px #0000002e; }
 .card-fav .fav:hover { background: #fff; }
 .card-fav .fav svg { width: 18px; height: 18px; }
-.card-tags { position: absolute; left: 14px; bottom: 14px; z-index: 2; display: flex; gap: 6px; }
-.card-tags span { padding: 6px 11px; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; line-height: 1; color: #fff; background: #1a1610b3; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.card-tags .tag-deal { background: var(--brand); color: var(--on-brand); }
-.card-tags .tag-deal.rent { background: var(--ink); color: #f6efe0; }
+/* "Зарна · Оффис": one light frosted pill, readable on any photo without darkening it */
+.card-tag { position: absolute; left: 12px; bottom: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px 5px 10px; border-radius: var(--r-pill); background: #fffdf8eb; color: var(--text); font-size: var(--fs-xs);
+  font-weight: 600; line-height: 1.2; box-shadow: 0 1px 6px #0000002b; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.card-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gold-500); }
+.card-tag.rent::before { background: var(--st-active); }
 
-.card .card-body { padding: 18px 22px 18px; gap: 0; }
-.card-loc { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-xs); font-weight: 500; letter-spacing: .08em; text-transform: uppercase; min-width: 0; }
+.card .card-body { flex: 1; padding: 16px 20px 18px; gap: 0; }
+.card-loc { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-sm); font-weight: 500; min-width: 0; }
 .card-loc svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; }
 .card-loc span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card .title { margin-top: 10px; font-size: var(--fs-xl); font-weight: 500; line-height: 1.35; letter-spacing: -.01em; white-space: normal;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(1.35em * 2); }
-.card-specs { display: flex; flex-wrap: wrap; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid #1f1b141a;
-  color: var(--muted); font-size: var(--fs-xs); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
-.card-specs span + span::before { content: ""; display: inline-block; width: 1px; height: 12px; margin: 0 12px; background: #1f1b1426; vertical-align: -1px; }
-.card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; min-width: 0; }
-.card .card-foot .price { color: var(--brand-text); font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -.01em; }
-.card-more { flex: none; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; transition: color .2s; }
-.card-more svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
-.card:hover .card-more { color: var(--brand-text); }
-.card:hover .card-more svg { transform: translateX(3px); }
+.card .title { margin: 6px 0 14px; font-size: var(--fs-lg); font-weight: 600; line-height: 1.35; letter-spacing: -.01em; white-space: normal;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* specs + price sit at the bottom, so cards in a row line up whatever the title length */
+.card-specs { display: flex; flex-wrap: wrap; align-items: center; row-gap: 4px; margin-top: auto; color: var(--muted); font-size: var(--fs-sm); }
+.card-specs span + span::before { content: ""; display: inline-block; width: 3px; height: 3px; margin: 0 9px; border-radius: 50%;
+  background: currentColor; opacity: .55; vertical-align: 3px; }
+.card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid #1f1b1414; min-width: 0; }
+.card .card-foot .price { color: var(--text); font-size: var(--fs-xl); font-weight: 700; letter-spacing: -.015em; }
+.card .card-foot .price small { font-size: var(--fs-sm); font-weight: 500; color: var(--muted); }
 .grid-feature .card-img { aspect-ratio: 16/9; }
-@media (max-width: 520px) { .card .card-body { padding: 16px 16px 16px; } .card .title { font-size: var(--fs-lg); } .card .card-foot .price { font-size: var(--fs-xl); } }
+@media (max-width: 520px) { .card .card-body { padding: 14px 16px 16px; } .card .title { font-size: var(--fs-md); } .card .card-foot .price { font-size: var(--fs-lg); } }
 
 /* Нарийвчилсан хэсэг: "Шүүлтүүр цэвэрлэх" товчийг доод мөрөнд баруун талд */
 .fbar-adv .ff-end { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; margin-top: -6px; }
@@ -1372,3 +1377,51 @@ img.is-uploading { opacity: .5; }
   .sh-grid { grid-template-columns: repeat(4, 1fr); }
   .sh-ico { width: 52px; height: 52px; }
 }
+
+/* ================= Payments (/pay/[id], publish step) ================= */
+:root { --st-unpaid: #a8612a; }
+.badge.unpaid { background: var(--st-unpaid); color: #fff; }
+.pay { max-width: 980px; margin: var(--sp-5) auto var(--sp-7); }
+.pay-head h1 { margin-bottom: var(--sp-1); }
+.pay-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--sp-4); align-items: start; margin-top: var(--sp-4); }
+@media (max-width: 760px) { .pay-grid { grid-template-columns: 1fr; } .pay-qr { order: -1; } }
+.pay-listing { display: flex; gap: var(--sp-3); align-items: center; padding-bottom: var(--sp-4); border-bottom: 1px solid var(--line); }
+.pay-listing img { width: 84px; height: 63px; object-fit: cover; border-radius: var(--r-sm); flex: none; background: var(--surface-2); }
+.pay-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pay-items { margin: var(--sp-4) 0; display: grid; gap: var(--sp-2); }
+.pay-items > div { display: flex; justify-content: space-between; gap: var(--sp-3); font-size: var(--fs-base); }
+.pay-items dt { color: var(--muted); } .pay-items dd { margin: 0; font-weight: 600; white-space: nowrap; }
+.pay-items .pay-total { margin-top: var(--sp-1); padding-top: var(--sp-3); border-top: 1px solid var(--line); font-size: var(--fs-lg); }
+.pay-items .pay-total dt { color: var(--text); font-weight: 600; } .pay-items .pay-total dd { font-weight: 700; }
+.price-box { padding: var(--sp-4) var(--sp-5); border-radius: var(--r-md); background: var(--gold-50); border: 1px solid var(--gold-200); }
+.price-box .pay-items { margin-top: 0; }
+.pay-qr { text-align: center; }
+.pay-status { display: inline-flex; align-items: center; gap: var(--sp-2); padding: 6px 14px; border-radius: var(--r-pill);
+  background: var(--gold-50); border: 1px solid var(--gold-200); font-size: var(--fs-sm); font-weight: 600; color: var(--brand-text); }
+.pay-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold-500); animation: pay-pulse 1.6s ease-in-out infinite; }
+@keyframes pay-pulse { 50% { opacity: .3; transform: scale(.75); } }
+@media (prefers-reduced-motion: reduce) { .pay-dot { animation: none; } }
+.pay-qr-img { display: block; width: 240px; height: 240px; max-width: 100%; margin: var(--sp-4) auto var(--sp-3); padding: var(--sp-3);
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); image-rendering: pixelated; }
+.pay-qr-mock { display: grid; place-items: center; color: var(--muted); font-weight: 700; background: repeating-linear-gradient(45deg, var(--surface-2) 0 10px, var(--surface) 10px 20px); }
+.pay-qr-help { color: var(--muted); max-width: 320px; margin: 0 auto; }
+.pay-or { display: flex; align-items: center; gap: var(--sp-3); margin: var(--sp-4) 0 var(--sp-3); color: var(--muted); font-size: var(--fs-sm); }
+.pay-or::before, .pay-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.pay-banks { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--sp-2); text-align: center; }
+.pay-bank { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); padding: var(--sp-2); border: 1px solid var(--line);
+  border-radius: var(--r-sm); background: var(--surface-hi); color: var(--text); font-size: var(--fs-xs); line-height: 1.25; }
+.pay-bank:hover { border-color: var(--brand); color: var(--text); text-decoration: none; }
+.pay-bank img { width: 36px; height: 36px; border-radius: var(--r-sm); object-fit: contain; }
+/* bank-app buttons open the bank app: only useful on a phone, the QR is the way on a computer */
+@media (hover: hover) and (pointer: fine) { .pay-or, .pay-banks { display: none; } }
+.pay-mock p { color: var(--muted); max-width: 340px; margin: 0 auto var(--sp-3); }
+.pay-done-actions { justify-content: center; }
+
+/* card badges: one family with the "Зарна · Оффис" label. 360° = light frosted pill with the tour icon;
+   VIP = dark with gold text; Онцгой keeps its terracotta. */
+.card .badges .badge { display: inline-flex; align-items: center; gap: 5px; }
+.badge .ico { width: 13px; height: 13px; }
+.card .badges .badge.b360 { background: #fffdf8eb; color: var(--text); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.card .badges .badge.b360 .ico { color: var(--brand-text); }
+.card .badges .badge.vip { background: var(--ink); color: var(--gold-300); }
+.card .badges .badge.top { background: var(--top); color: #fff; }

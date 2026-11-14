@@ -94,7 +94,12 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
               <div className="avatar">{l.sellerAvatar ? <img src={l.sellerAvatar} alt="" /> : l.sellerName.slice(0, 1)}</div>
               <div><b>{l.sellerName}</b><div className="muted small">{l.sellerType === 'owner' ? 'Эзэмшигч' : 'Агент'}</div></div>
             </div>
-            {l.status === 'active' ? <PhoneAndFav id={l.id} title={l.title} image={l.photos[0]?.src} /> : <div className="muted small">Зар нийтлэгдээгүй байна — утас харагдахгүй.</div>}
+            {l.status === 'active' ? <PhoneAndFav id={l.id} title={l.title} image={l.photos[0]?.src} />
+              : l.status === 'unpaid' ? <>
+                  <div className="muted small mb-3">Төлбөр төлөгдөөгүй тул зар нийтлэгдээгүй байна.</div>
+                  <Link className="btn btn-primary btn-block" href={`/pay/${l.id}`}>Төлбөр төлөх</Link>
+                </>
+              : <div className="muted small">Зар нийтлэгдээгүй байна — утас харагдахгүй.</div>}
           </div>
           {l.status === 'active' && <InquiryForm id={l.id} title={l.title} />}
           <div className="panel">

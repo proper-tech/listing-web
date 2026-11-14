@@ -3,8 +3,9 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { adminListings, adminUpdateListing } from '@/lib/api/listings';
 import { adminCreateUser, adminUpdateUser, adminUsers, dismissReports, listReports } from '@/lib/api/admin';
+import { adminPayments, type PaymentSummary } from '@/lib/api/payments';
 import type { AdminListing, AdminUser, Report } from '@/lib/types';
-import { CATS, NOIMG, PLACEMENTS, REPORT_REASON_MN, STATUS_MN } from '@/lib/constants';
+import { CATS, NOIMG, REPORT_REASON_MN, STATUS_MN } from '@/lib/constants';
 import { fmtDate, fmtPrice } from '@/lib/format';
 import { Price } from './ListingCard';
 import { useToast } from './Toast';
@@ -23,6 +24,7 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [tab, setTab] = useState<Tab>('pending');
   const [failed, setFailed] = useState(false);
+  const [income, setIncome] = useState<PaymentSummary | null>(null);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -37,6 +39,7 @@ export default function AdminPanel() {
     } catch (e) { toast((e as Error).message); setFailed(true); }
   }, [toast]);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { adminPayments().then((r) => setIncome(r.summary)).catch(() => {}); }, []);
 
   if (!data) return failed ? <LoadError message="Админ самбар ачаалж чадсангүй." onRetry={load} /> : <PageLoader />;
 
@@ -48,7 +51,6 @@ export default function AdminPanel() {
   };
   const agents = users.filter((u) => u.role === 'agent');
   const counts: Record<Tab, number> = { ...Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.length])) as Record<Exclude<Tab, 'agents'>, number>, agents: agents.length };
-  const promoTotal = data.items.filter((l) => l.placement !== 'free').reduce((s, l) => s + PLACEMENTS[l.placement].price, 0);
 
   const act = async (l: AdminListing, body: Parameters<typeof adminUpdateListing>[1], confirmMsg?: string) => {
     if (confirmMsg && !confirm(confirmMsg)) return;
@@ -69,7 +71,11 @@ export default function AdminPanel() {
         <div className="panel"><div className="muted small">Нийт зар</div><div className="price">{data.items.length}</div></div>
         <div className="panel"><div className="muted small">Хянах</div><div className="price">{groups.pending.length}</div></div>
         <div className="panel"><div className="muted small">Агент</div><div className="price">{agents.filter((a) => a.active).length}</div></div>
-        <div className="panel"><div className="muted small">VIP/Онцгой орлого (демо)</div><div className="price">{fmtPrice(promoTotal)}</div></div>
+        <div className="panel">
+          <div className="muted small">Орлого энэ сар{income?.mode === 'mock' ? ' (туршилтын горим)' : ''}</div>
+          <div className="price">{income ? fmtPrice(income.paidThisMonth) : '—'}</div>
+          {income && <div className="muted small">Нийт {fmtPrice(income.paidTotal)} · {income.paidCount} төлбөр</div>}
+        </div>
       </div>
       <div className="tabs">
         {(Object.keys(TAB_NAMES) as Tab[]).map((k) => (
