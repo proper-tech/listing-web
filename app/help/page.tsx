@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: 'Тусламж' };
 
 export default function HelpPage() {
   return (
-    <div className="prose" style={{ margin: '20px 0' }}>
+    <div className="prose my-5">
       <h1>Тусламж</h1>
       <h2>360° аялал хэрхэн хийх вэ?</h2>
       <p>Зар оруулах үед 4-р алхам дээр өрөө бүрт 360° зураг нэмнэ. Хоёр арга бий:</p>

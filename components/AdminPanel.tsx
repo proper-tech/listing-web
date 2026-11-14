@@ -11,6 +11,7 @@ import { useToast } from './Toast';
 import { useAuth } from './Auth';
 import PageLoader from '@/components/PageLoader';
 import LoadError from '@/components/LoadError';
+import Icon from './Icon';
 
 type Tab = 'pending' | 'reported' | 'active' | 'all' | 'agents';
 const TAB_NAMES: Record<Tab, string> = { pending: 'Хянах', reported: 'Мэдээлэгдсэн', active: 'Идэвхтэй', all: 'Бүх зар', agents: 'Агентууд' };
@@ -61,10 +62,10 @@ export default function AdminPanel() {
 
   return (
     <>
-      <div className="section-head" style={{ marginTop: 20 }}>
+      <div className="section-head mt-5">
         <h1>Админ самбар</h1>
       </div>
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))' }}>
+      <div className="grid stat-grid">
         <div className="panel"><div className="muted small">Нийт зар</div><div className="price">{data.items.length}</div></div>
         <div className="panel"><div className="muted small">Хянах</div><div className="price">{groups.pending.length}</div></div>
         <div className="panel"><div className="muted small">Агент</div><div className="price">{agents.filter((a) => a.active).length}</div></div>
@@ -76,7 +77,7 @@ export default function AdminPanel() {
         ))}
       </div>
       {tab === 'agents' ? <Agents users={users} meId={meId} reload={load} /> : !groups[tab].length ? <div className="empty">Энд зар алга.</div> : (
-        <div style={{ overflowX: 'auto' }}><table className="admin-table"><tbody>
+        <div className="scroll-x"><table className="admin-table"><tbody>
           <tr><th /><th>Зар</th><th>Оруулагч</th><th>Төлөв</th><th>Мэдээлэл</th><th /></tr>
           {groups[tab].map((l) => (
             <tr key={l.id}>
@@ -90,8 +91,8 @@ export default function AdminPanel() {
                 <span className={`badge ${l.status}`}>{STATUS_MN[l.status]}</span>{' '}
                 {l.placement !== 'free' && <span className={`badge ${l.placement}`}>{l.placement.toUpperCase()}</span>}
               </td>
-              <td>{l.reports > 0 && <>⚑ {l.reports}<ReportReasons reports={data.reports.filter((r) => r.listingId === l.id)} /></>}</td>
-              <td style={{ whiteSpace: 'nowrap' }}>
+              <td>{l.reports > 0 && <><span className="report-count"><Icon name="flag" size={14} /> {l.reports}</span><ReportReasons reports={data.reports.filter((r) => r.listingId === l.id)} /></>}</td>
+              <td className="nowrap">
                 {l.status !== 'active' && <button className="btn btn-sm btn-primary" onClick={() => act(l, { status: 'active' })}>Батлах</button>}{' '}
                 {l.status === 'pending' && <button className="btn btn-sm" onClick={() => act(l, { status: 'rejected' })}>Татгалзах</button>}{' '}
                 {l.status === 'active' && <button className="btn btn-sm" onClick={() => act(l, { status: 'pending' })}>Нуух</button>}{' '}
@@ -151,8 +152,8 @@ function Agents({ users, meId, reload }: { users: AdminUser[]; meId: string; rel
 
   return (
     <>
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>+ Агент нэмэх</h3>
+      <div className="panel mb-4">
+        <h3 className="mt-0">+ Агент нэмэх</h3>
         <form onSubmit={create}>
           <div className="grid-fields">
             <label className="field"><span>Нэр / компани</span><input type="text" name="name" maxLength={60} required /></label>
@@ -160,12 +161,12 @@ function Agents({ users, meId, reload }: { users: AdminUser[]; meId: string; rel
             <label className="field"><span>Утас (зар дээр харагдана)</span><input type="tel" name="phone" placeholder="8 оронтой" maxLength={11} required /></label>
             <label className="field"><span>Түр нууц үг (8+)</span><input type="text" name="password" minLength={8} autoComplete="off" required /></label>
           </div>
-          {error && <div className="error-box" style={{ marginBottom: 12 }}>{error}</div>}
+          {error && <div className="error-box mb-3">{error}</div>}
           <button className="btn btn-primary" disabled={busy}>Нэмэх</button>
-          <span className="muted small" style={{ marginLeft: 10 }}>Агент анх нэвтрэхдээ нууц үгээ заавал солино.</span>
+          <span className="muted small ml-3">Агент анх нэвтрэхдээ нууц үгээ заавал солино.</span>
         </form>
       </div>
-      <div style={{ overflowX: 'auto' }}><table className="admin-table"><tbody>
+      <div className="scroll-x"><table className="admin-table"><tbody>
         <tr><th>Нэр</th><th>Имэйл</th><th>Утас</th><th>Эрх</th><th>Зар</th><th>Бүртгэсэн</th><th>Төлөв</th><th /></tr>
         {users.map((u) => (
           <tr key={u.id}>
@@ -179,7 +180,7 @@ function Agents({ users, meId, reload }: { users: AdminUser[]; meId: string; rel
               <span className={`badge ${u.active ? 'active' : 'rejected'}`}>{u.active ? 'Идэвхтэй' : 'Идэвхгүй'}</span>
               {u.mustChangePassword && <div className="muted small">нууц үг солих хүлээгдэж буй</div>}
             </td>
-            <td style={{ whiteSpace: 'nowrap' }}>
+            <td className="nowrap">
               {u.id !== meId && (u.active
                 ? <button className="btn btn-sm btn-danger" onClick={() => confirm(`${u.name}-г идэвхгүй болгох уу? Нэвтрэлт нь шууд гарна.`) && update(u, { active: false }, 'Идэвхгүй болголоо')}>Идэвхгүй болгох</button>
                 : <button className="btn btn-sm" onClick={() => update(u, { active: true }, 'Идэвхжүүллээ')}>Идэвхжүүлэх</button>)}{' '}

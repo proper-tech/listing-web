@@ -71,7 +71,7 @@ export default function LoginForm({ next }: { next: string }) {
           />
         </label>
         {error && (
-          <div className="error-box" style={{ marginBottom: 12 }}>
+          <div className="error-box mb-3">
             {error}
           </div>
         )}

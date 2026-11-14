@@ -1,7 +1,8 @@
+import Icon from './Icon';
 export default function CaptureGuide() {
   return (
     <div className="guide">
-      <b>📸 360° зураг авах заавар</b>
+      <b className="guide-title"><Icon name="camera" /> 360° зураг авах заавар</b>
       <ul>
         <li>Өрөөний голд зогсож, утсаа цээжний өндөрт, <b>хэвтээ</b> барина.</li>
         <li>Бугуйгаа биш, <b>биеэрээ</b> эргэнэ. Утас нэг цэг дээрээ байх ёстой.</li>

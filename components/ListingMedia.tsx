@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Img, Tour } from '@/lib/types';
 import { NOIMG } from '@/lib/constants';
 import TourViewer from './TourViewer';
+import Icon from './Icon';
 
 export default function ListingMedia({ photos, tour, startWithTour }: { photos: Img[]; tour?: Tour; startWithTour: boolean }) {
   const readyRooms = tour ? tour.rooms.filter((r) => r.status === 'ready').length : 0;
@@ -13,8 +14,8 @@ export default function ListingMedia({ photos, tour, startWithTour }: { photos: 
   return (
     <>
       <div className="media-tabs">
-        {photos.length > 0 && <button className={`btn btn-sm ${mode === 'photos' ? 'btn-primary' : ''}`} onClick={() => setMode('photos')}>📷 Зураг ({photos.length})</button>}
-        {readyRooms > 0 && <button className={`btn btn-sm ${mode === 'tour' ? 'btn-primary' : ''}`} onClick={() => setMode('tour')}>🔄 360° аялал ({readyRooms} өрөө)</button>}
+        {photos.length > 0 && <button className={`btn btn-sm ${mode === 'photos' ? 'btn-primary' : ''}`} onClick={() => setMode('photos')}><Icon name="camera" /> Зураг ({photos.length})</button>}
+        {readyRooms > 0 && <button className={`btn btn-sm ${mode === 'tour' ? 'btn-primary' : ''}`} onClick={() => setMode('tour')}><Icon name="tour" /> 360° аялал ({readyRooms} өрөө)</button>}
       </div>
       {mode === 'tour' && tour && readyRooms > 0 ? <TourViewer tour={tour} /> : photos.length ? (
         <>

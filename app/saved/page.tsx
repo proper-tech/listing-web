@@ -28,11 +28,11 @@ export default function SavedPage() {
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!items) return <PageLoader />;
-  if (!items.length) return <><h1 style={{ marginTop: 20 }}>Хадгалсан зар</h1><div className="empty">Хадгалсан зар алга.</div></>;
+  if (!items.length) return <><h1 className="mt-5">Хадгалсан зар</h1><div className="empty">Хадгалсан зар алга.</div></>;
   const cmp = items.slice(0, 4);
   return (
     <>
-      <h1 style={{ marginTop: 20 }}>Хадгалсан зар ({items.length})</h1>
+      <h1 className="mt-5">Хадгалсан зар ({items.length})</h1>
       <Grid items={items} />
       {items.length > 1 && <>
         <h2>Харьцуулах</h2>

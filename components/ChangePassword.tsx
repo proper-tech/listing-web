@@ -36,7 +36,7 @@ export default function ChangePassword({ next, forced }: { next: string; forced:
       <label className="field"><span>Одоогийн нууц үг</span><input type="password" name="current" autoComplete="current-password" required /></label>
       <label className="field"><span>Шинэ нууц үг (8+ тэмдэгт)</span><input type="password" name="next" autoComplete="new-password" minLength={8} required /></label>
       <label className="field"><span>Шинэ нууц үг дахин</span><input type="password" name="confirm" autoComplete="new-password" minLength={8} required /></label>
-      {error && <div className="error-box" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div className="error-box mb-3">{error}</div>}
       <button className="btn btn-primary" disabled={busy}>{busy ? 'Хадгалж байна…' : 'Хадгалах'}</button>
       <p className="muted small">Нууц үг солигдоход бусад төхөөрөмж дээрх нэвтрэлт гарна.</p>
     </form>

@@ -50,7 +50,7 @@ export default function Account({ next }: { next: string }) {
     return (
       <div className="panel auth-card">
         <h1>Нууц үг солих</h1>
-        <p className="muted small" style={{ marginTop: 0 }}>{user.name} · имэйл: <b>{user.email}</b></p>
+        <p className="muted small mt-0">{user.name} · имэйл: <b>{user.email}</b></p>
         <div className="warn-box">Таны нууц үгийг админ тохируулсан эсвэл анхны нууц үг байна. Үргэлжлүүлэхийн өмнө шинэ нууц үг тохируулна уу.</div>
         <ChangePassword next={next || homeFor(user)} forced />
       </div>
@@ -175,7 +175,7 @@ function ProfilePage({ user }: { user: User }) {
             <Stat label="Сайтын нийт зар" value={admin?.listings} href="/admin" />
             <Stat label="Агентууд" value={admin?.agents} note={admin?.inactive ? `${admin.inactive} идэвхгүй` : undefined} href="/admin" />
           </div>
-          <p className="muted small" style={{ margin: '12px 0 0' }}>Агент нэмэх, нууц үг шинэчлэх, имэйл солих нь Админ самбар → Агентууд хэсэгт байна.</p>
+          <p className="muted small mt-3 mb-0">Агент нэмэх, нууц үг шинэчлэх, имэйл солих нь Админ самбар → Агентууд хэсэгт байна.</p>
         </section>
       )}
 
@@ -195,7 +195,7 @@ function ProfilePage({ user }: { user: User }) {
             <label className="field"><span>Компани / агентлаг</span><input type="text" value={draft.company} maxLength={80} onChange={(e) => set('company', e.target.value)} /></label>
             <label className="field"><span>Танилцуулга</span><textarea rows={4} value={draft.bio} maxLength={400} placeholder="Туршлага, мэргэшсэн бүс нутаг…" onChange={(e) => set('bio', e.target.value)} /></label>
             <label className="field"><span>Имэйл (нэвтрэх)</span><input type="text" value={user.email} disabled /></label>
-            <p className="muted small" style={{ marginTop: -6 }}>Имэйлээ солихыг админаас хүснэ үү.</p>
+            <p className="muted small field-note">Имэйлээ солихыг админаас хүснэ үү.</p>
             <div className="profile-save">
               <button className="btn btn-primary" disabled={!dirty || saving}>{saving ? 'Хадгалж байна…' : 'Хадгалах'}</button>
               {dirty && !saving && <button type="button" className="btn" onClick={onCancel}>Болих</button>}

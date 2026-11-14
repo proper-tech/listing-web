@@ -166,5 +166,5 @@ function LeafletLocationPicker({ value, center, onPick }: PickerProps) {
     });
   });
   useEffect(() => { if (center && mapRef.current) mapRef.current.setView(center, 14); }, [center?.[0], center?.[1]]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <div className="mini-map" ref={ref} style={{ height: 360 }} />;
+  return <div className="mini-map map-tall" ref={ref} />;
 }

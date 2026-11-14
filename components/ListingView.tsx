@@ -14,6 +14,7 @@ import { MiniMap } from './Maps';
 import { useAuth } from './Auth';
 import PageLoader from '@/components/PageLoader';
 import LoadError from '@/components/LoadError';
+import Icon from './Icon';
 
 export default function ListingView({ id, startWithTour }: { id: string; startWithTour: boolean }) {
   const { user, loading: authLoading } = useAuth();
@@ -74,11 +75,11 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
         <div>
           <div className="panel">
             <h1>{l.title}</h1>
-            <div className="badges" style={{ position: 'static', marginBottom: 10 }}><Badges l={l} /></div>
+            <div className="badges badges-inline"><Badges l={l} /></div>
             <ListingMedia photos={l.photos} tour={l.tour} startWithTour={startWithTour} />
           </div>
-          <div className="panel" style={{ marginTop: 16 }}>
-            <h2 style={{ marginTop: 0 }}>Дэлгэрэнгүй</h2>
+          <div className="panel mt-4">
+            <h2 className="mt-0">Дэлгэрэнгүй</h2>
             <dl className="specs">{shown.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
             {l.description && <><h3>Тайлбар</h3><p className="desc">{l.description}</p></>}
             <h3>Байршил</h3>
@@ -89,7 +90,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
           <div className="panel">
             <div className="price"><Price l={l} /></div>
             {l.pricePerM2 && <div className="muted small">м² — {fmtFull(l.pricePerM2)}</div>}
-            <div className="seller" style={{ margin: '16px 0' }}>
+            <div className="seller my-4">
               <div className="avatar">{l.sellerAvatar ? <img src={l.sellerAvatar} alt="" /> : l.sellerName.slice(0, 1)}</div>
               <div><b>{l.sellerName}</b><div className="muted small">{l.sellerType === 'owner' ? 'Эзэмшигч' : 'Агент'}</div></div>
             </div>
@@ -100,7 +101,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
             <div className="kv"><span>Зарын дугаар</span><b>{l.id}</b></div>
             <div className="kv"><span>Нийтэлсэн</span><span>{fmtDate(l.createdAt)} ({timeAgo(l.createdAt)})</span></div>
             <div className="kv"><span>Үзсэн</span><span>{l.views}</span></div>
-            {user?.role === 'admin' && <Link className="btn btn-sm btn-block admin-edit-btn" href={`/admin/edit/${l.id}`}>✎ Зар засах (админ)</Link>}
+            {user?.role === 'admin' && <Link className="btn btn-sm btn-block admin-edit-btn" href={`/admin/edit/${l.id}`}><Icon name="edit" /> Зар засах (админ)</Link>}
             <ReportButton id={l.id} />
           </div>
         </aside>

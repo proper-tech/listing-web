@@ -12,7 +12,7 @@ const ROWS = [
 
 export default function PricingPage() {
   return (
-    <div className="prose" style={{ margin: '20px 0' }}>
+    <div className="prose my-5">
       <h1>Үнэ</h1>
       <table className="admin-table"><tbody>
         <tr><th>Үйлчилгээ</th><th>Тайлбар</th><th>Үнэ</th></tr>

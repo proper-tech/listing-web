@@ -33,10 +33,10 @@ export default function MyAds() {
 
   return (
     <>
-      <div className="section-head" style={{ marginTop: 20 }}><h1>Миний зар</h1><Link className="btn btn-primary" href="/post">+ Зар нэмэх</Link></div>
+      <div className="section-head mt-5"><h1>Миний зар</h1><Link className="btn btn-primary" href="/post">+ Зар нэмэх</Link></div>
       {user && <p className="muted small">{user.name} · {user.role === 'admin' ? 'Админ' : 'Агент'}. Таны оруулсан зарууд энд харагдана; агентын зар админ баталсны дараа нийтлэгдэнэ.</p>}
       {!items ? <PageLoader /> : !items.length ? <div className="empty">Та одоогоор зар оруулаагүй байна.</div> : (
-        <div style={{ overflowX: 'auto' }}><table className="admin-table"><tbody>
+        <div className="scroll-x"><table className="admin-table"><tbody>
           <tr><th /><th>Зар</th><th>Төлөв</th><th>Үзсэн</th><th>Оруулсан</th><th /></tr>
           {items.map((l) => (
             <tr key={l.id}>
@@ -45,7 +45,7 @@ export default function MyAds() {
               <td><span className={`badge ${l.status}`}>{STATUS_MN[l.status]}</span></td>
               <td>{l.views}</td>
               <td>{fmtDate(l.createdAt)}</td>
-              <td style={{ whiteSpace: 'nowrap' }}>
+              <td className="nowrap">
                 {(l.status === 'archived' || l.status === 'sold')
                   ? <button className="btn btn-sm" onClick={() => act(l, 'restore')}>Сэргээх</button>
                   : <>

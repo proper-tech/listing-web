@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Golos_Text, Inter } from 'next/font/google';
 import { Suspense } from 'react';
 import 'leaflet/dist/leaflet.css';
-import './globals.css';
 import './proper.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';

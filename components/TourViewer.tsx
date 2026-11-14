@@ -52,7 +52,7 @@ export default function TourViewer({ tour }: { tour: Tour }) {
     <>
       <div className="tour-wrap">
         {/* sized wrapper: Pannellum's own CSS sets height:100% on the element it takes over */}
-        <div className="pano"><div ref={el} style={{ width: '100%', height: '100%' }} /></div>
+        <div className="pano"><div ref={el} className="fill" /></div>
         {error && <div className="error-box">{error}</div>}
         {withPlan.length > 0 && (
           <div className="floorplan" title="Байрны план">

@@ -131,5 +131,5 @@ export function GoogleLocationPicker({ value, center, onPick }: {
   useEffect(() => {
     if (center && mapRef.current) { mapRef.current.setCenter(toLL(center)); mapRef.current.setZoom(15); }
   }, [center?.[0], center?.[1]]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <div className="mini-map" style={{ height: 360 }}>{error ? <MapError msg={error} /> : <div className="map-canvas" ref={ref} />}</div>;
+  return <div className="mini-map map-tall">{error ? <MapError msg={error} /> : <div className="map-canvas" ref={ref} />}</div>;
 }

@@ -5,6 +5,7 @@ import { markInquiryRead, myInquiries } from '@/lib/api/inquiries';
 import type { InquiryWithListing } from '@/lib/types';
 import { timeAgo } from '@/lib/format';
 import PageLoader from '@/components/PageLoader';
+import Icon from './Icon';
 
 /** "Миний зар" хуудсан дээр: зарууд руу ирсэн холбоо барих хүсэлтүүд. */
 export default function InquiryInbox() {
@@ -24,7 +25,7 @@ export default function InquiryInbox() {
 
   return (
     <section className="inbox">
-      <div className="section-head" style={{ marginTop: 32 }}>
+      <div className="section-head mt-6">
         <h2>Ирсэн хүсэлтүүд {unread > 0 && <span className="inbox-badge">{unread} шинэ</span>}</h2>
       </div>
       {!items ? <PageLoader /> : !items.length ? (
@@ -43,8 +44,8 @@ export default function InquiryInbox() {
                 <div className="inbox-body">
                   <p>{q.message}</p>
                   <div className="inbox-actions">
-                    <a className="btn btn-sm btn-primary" href={`tel:${q.phone}`}>📞 {q.phone}</a>
-                    {q.email && <a className="btn btn-sm" href={`mailto:${q.email}`}>✉ {q.email}</a>}
+                    <a className="btn btn-sm btn-primary" href={`tel:${q.phone}`}><Icon name="phone" /> {q.phone}</a>
+                    {q.email && <a className="btn btn-sm" href={`mailto:${q.email}`}><Icon name="mail" /> {q.email}</a>}
                     <Link className="btn btn-sm" href={`/listing/${q.listingId}`}>Зарыг харах</Link>
                   </div>
                 </div>
