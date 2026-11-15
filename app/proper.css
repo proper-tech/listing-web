@@ -51,6 +51,9 @@ input[type=text], input[type=number], input[type=tel], input[type=search], input
      darker so it passes contrast (≈5:1 on --bg; the fill colour would only be ≈2.3:1) */
   --brand: var(--gold-500); --brand-text: var(--gold-700); --brand-2: #c39a3e24; --on-brand: #1a1408; --accent: var(--gold-500); --vip: var(--gold-400); --top: #c4704f; --danger: #b3402e;
   --radius: var(--r-sm); --shadow: none;
+  /* keyboard focus ring: needs ≥3:1 against what's behind it. gold-400 was ≈1.8:1 on cream; gold-700 is ≈5:1.
+     Dark sections (.hero, .cta) override it with a light gold. */
+  --focus: var(--gold-700);
   /* One family for everything: Golos Text (chosen 2026-11-09 from a specimen of 8 Cyrillic fonts; has Mongolian Ө/Ү).
      Loaded with next/font in layout.tsx (--font-golos). Letters and digits come from the same font. */
   --font: var(--font-golos), "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -105,7 +108,7 @@ h1 { font-size: var(--fs-3xl); margin: 0 0 10px; } h2 { font-size: var(--fs-2xl)
 .btn-primary:hover, .btn-accent:hover { background: var(--gold-grad); background-size: 140% 140%; background-position: 100% 100%; border-color: var(--gold-600); color: var(--on-brand);
                                         box-shadow: inset 0 1px 0 #fff8dc99, 0 12px 24px -10px #a7802ccc; }
 .btn-primary:active, .btn-accent:active { transform: translateY(1px); }
-.btn:focus-visible, .seg button:focus-visible, .cat:focus-visible { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+.btn:focus-visible, .seg button:focus-visible, .cat:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .btn-danger { color: var(--danger); }
 .btn-sm { padding: 5px 10px; font-size: var(--fs-sm); border-radius: var(--r-sm); }
 .btn-block { width: 100%; }
@@ -128,7 +131,7 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
 .field-err::before { content: "⚠ "; }
 .field-warn { color: #8a5a00; }
 .field.invalid > span, .field.invalid > span.muted { color: var(--danger); }
-.chip:focus { outline: none; } .chip:focus-visible { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+.chip:focus { outline: none; } .chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .grid-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 16px; }
 .check { display: flex; align-items: center; gap: 8px; margin: 6px 0; cursor: pointer; }
@@ -199,7 +202,7 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
 /* home */
 /* Hero: endlessly crossfading drone clip (HeroVideo.tsx) behind a frosted-glass panel */
 .hero { --bg: #0d0d0c; --surface: #161614; --surface-2: #1e1d1a; --text: #f1ebdf; --muted: #c9c0b0; --line: #ffffff1f;
-        --brand: var(--gold-400); --brand-text: var(--gold-300); --on-brand: #1a1408; color-scheme: dark; border-radius: 0;
+        --brand: var(--gold-400); --brand-text: var(--gold-300); --on-brand: #1a1408; --focus: var(--gold-300); color-scheme: dark; border-radius: 0;
         position: relative; overflow: hidden; isolation: isolate; display: flex; align-items: flex-end; background: var(--surface); color: var(--text);
         /* full-bleed: break out of the .wrap gutter to the screen edges. The negative top margin pulls it up behind the
            floating header (gap + bar height + border), so the video fills the whole screen and the bar floats over it */
@@ -266,7 +269,7 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
 
 /* closing call-to-action band */
 .cta { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap;
-       margin-top: clamp(36px, 6vw, 72px); padding: clamp(24px, 4vw, 44px); color: #f1ebdf;
+       margin-top: clamp(36px, 6vw, 72px); padding: clamp(24px, 4vw, 44px); color: #f1ebdf; --focus: var(--gold-300);
        background: radial-gradient(70% 140% at 100% 0%, #d4ad5740, transparent 60%), linear-gradient(135deg, #1a1712, #0d0d0c); border: 1px solid #c39a3e59; }
 .cta::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--gold-grad); }
 .cta h2 { margin: 0 0 6px; color: #f1ebdf; font-size: clamp(22px, 2.6vw, 30px); }
@@ -457,7 +460,7 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
 .wsteps li.done button { color: var(--text); }
 .wsteps li.on .dot { background: var(--gold-grad); border-color: transparent; color: var(--on-brand); box-shadow: 0 0 0 4px var(--brand-2); }
 .wsteps li.on .lbl { color: var(--brand-text); font-weight: 700; }
-.wsteps button:focus-visible .dot { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+.wsteps button:focus-visible .dot { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 640px) { .wsteps .lbl { display: none; } .wsteps li.on .lbl { display: block; position: absolute; top: 38px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
                             .wsteps { margin-bottom: 34px; } }
 
@@ -486,7 +489,7 @@ label.field > span { display: block; font-size: var(--fs-sm); color: var(--muted
 .ptype.on .ico { background: var(--gold-grad); color: var(--on-brand); }
 .ptype .check { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
                 font-size: var(--fs-xs); font-weight: 700; background: var(--brand); color: var(--on-brand); }
-.choice:focus-visible, .ptype:focus-visible { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+.choice:focus-visible, .ptype:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .wiz-summary { padding: 12px 14px; border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-base); color: var(--muted); }
 .wiz-summary b { color: var(--text); }
 @media (max-width: 520px) { .choice-row { grid-template-columns: 1fr; } .ptype-grid { grid-template-columns: 1fr 1fr; } }
