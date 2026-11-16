@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getPhone } from '@/lib/api/listings';
 import { reportListing } from '@/lib/api/admin';
 import { REPORT_REASON_MN } from '@/lib/constants';
@@ -8,7 +8,7 @@ import FavButton from './FavButton';
 import Icon from './Icon';
 import ShareDialog from './ShareDialog';
 
-export function PhoneAndFav({ id, title, image }: { id: string; title: string; image?: string }) {
+export function PhoneAndFav({ id, title, image, price }: { id: string; title: string; image?: string; price?: React.ReactNode }) {
   const toast = useToast();
   const [phone, setPhone] = useState<string | null>(null);
   // Утасны дугаарыг зар нээгдэхэд шууд харуулна (товч дарах шаардлагагүй).
@@ -23,15 +23,31 @@ export function PhoneAndFav({ id, title, image }: { id: string; title: string; i
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const share = () => { setShareUrl(window.location.href.split('#')[0]); setShareOpen(true); };
+  // Phones (.callbar in proper.css): once the call button has scrolled off the screen, price + "Залгах" stay within reach at the bottom.
+  const callRef = useRef<HTMLAnchorElement>(null);
+  const [barOn, setBarOn] = useState(false);
+  useEffect(() => {
+    const el = callRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setBarOn(!e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [phone]);
   return (
     <>
       {phone
-        ? <a className="btn btn-primary btn-block" href={`tel:${phone}`}><Icon name="phone" /> {phone.replace(/(\d{4})(\d{4})/, '$1-$2')}</a>
+        ? <a ref={callRef} className="btn btn-primary btn-block" href={`tel:${phone}`}><Icon name="phone" /> {phone.replace(/(\d{4})(\d{4})/, '$1-$2')}</a>
         : <div className="btn btn-block" aria-busy="true"><Icon name="phone" /> Ачаалж байна…</div>}
       <div className="row-2 mt-2">
         <FavButton id={id} variant="button" />
         <button className="btn btn-block" onClick={share}><Icon name="share" /> Хуваалцах</button>
       </div>
+      {phone && price && (
+        <div className={`callbar ${barOn ? 'show' : ''}`}>
+          <div className="callbar-price">{price}</div>
+          <a className="btn btn-primary" href={`tel:${phone}`} tabIndex={barOn ? 0 : -1}><Icon name="phone" /> Залгах</a>
+        </div>
+      )}
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={title} url={shareUrl} image={image} />
     </>
   );

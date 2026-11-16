@@ -181,8 +181,8 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
             <span className={`chev ${advOpen ? 'up' : ''}`}>{I.chevron}</span>
           </button>
           <div className="fview" role="group" aria-label="Харагдац">
-            <button type="button" className={view === 'list' ? 'on' : ''} onClick={() => changeView('list')}>{I.grid}<span>Жагсаалт</span></button>
-            <button type="button" className={view === 'map' ? 'on' : ''} onClick={() => changeView('map')}>{I.map}<span>Газрын зураг</span></button>
+            <button type="button" className={view === 'list' ? 'on' : ''} aria-pressed={view === 'list'} aria-label="Жагсаалт" onClick={() => changeView('list')}>{I.grid}<span>Жагсаалт</span></button>
+            <button type="button" className={view === 'map' ? 'on' : ''} aria-pressed={view === 'map'} aria-label="Газрын зураг" onClick={() => changeView('map')}>{I.map}<span>Газрын зураг</span></button>
           </div>
         </div>
 

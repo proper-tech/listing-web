@@ -8,7 +8,6 @@ import { Grid } from './ListingCard';
 import HeroSearch from './HeroSearch';
 import CatIcon from './CatIcon';
 import HeroVideo from './HeroVideo';
-import PageLoader from '@/components/PageLoader';
 import LoadError from '@/components/LoadError';
 
 type Data = { stats: Stats; top: SearchResult; fresh: SearchResult; tours: SearchResult };
@@ -94,7 +93,12 @@ export default function HomeClient() {
         </div>
       </section>
       {failed ? <section className="block"><LoadError message="Зарууд ачаалж чадсангүй." onRetry={() => setAttempt((a) => a + 1)} /></section>
-      : !data ? <PageLoader /> : <>
+      : !data ? (
+        <section className="block" aria-busy="true" aria-label="Ачаалж байна">
+          <div className="section-head"><div><span className="kicker">Шинэ</span><h2>Шинэ зар</h2><p className="section-sub">Сүүлд нэмэгдсэн зарууд.</p></div></div>
+          <div className="grid">{[0, 1, 2, 3].map((i) => <div key={i} className="card card-skeleton" />)}</div>
+        </section>
+      ) : <>
         {data.top.items.length > 0 && (
           <section className="block">
             <div className="section-head">
@@ -134,7 +138,7 @@ export default function HomeClient() {
       {data && data.tours.items.length > 0 && (
         <section className="block">
           <div className="section-head">
-            <div><h2>360° аялалтай зар</h2><p className="section-sub">Очихгүйгээр өрөө бүрийг нь үзэх боломжтой зарууд.</p></div>
+            <div><span className="kicker">Виртуал аялал</span><h2>360° аялалтай зар</h2><p className="section-sub">Очихгүйгээр өрөө бүрийг нь үзэх боломжтой зарууд.</p></div>
             <Link className="more" href="/search?tour=1">Бүгдийг харах →</Link>
           </div>
           <Grid items={data.tours.items} />

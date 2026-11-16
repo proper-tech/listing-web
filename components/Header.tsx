@@ -86,7 +86,7 @@ export default function Header() {
             <button className="btn btn-sm user-logout" onClick={logout}>Гарах</button>
           </div>
         ) : (
-          <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn">
+          <Link href={`/login?next=${encodeURIComponent(path === '/login' ? '/' : path)}`} className="btn post-btn login-btn" aria-label="Агентаар нэвтрэх">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></svg>
             <span><span className="login-who">Агентаар </span>нэвтрэх</span>
           </Link>

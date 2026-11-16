@@ -64,6 +64,13 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
     ['Байршил', [l.location.district, l.location.khoroo, l.location.address].filter(Boolean).join(', ')],
   ];
   const shown = specs.filter(([, v]) => v !== undefined && v !== null && v !== '' && v !== false);
+  // the few numbers people look for first, right under the title
+  const facts: [string, string][] = [];
+  if (l.rooms) facts.push([String(l.rooms), 'өрөө']);
+  if (l.area) facts.push([String(l.area), 'м²']);
+  if (l.floor != null) facts.push([l.buildingFloors ? `${fmtFloor(l.floor)}/${l.buildingFloors}` : fmtFloor(l.floor), 'давхар']);
+  if (l.yearInUse) facts.push([String(l.yearInUse), 'он']);
+  const place = [l.location.district, l.location.khoroo && `${l.location.khoroo}-р хороо`, l.location.address].filter(Boolean).join(', ');
 
   return (
     <>
@@ -72,13 +79,24 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
         <Link href={`/search?deal=${l.dealType}&cat=${l.category}`}>{CATS[l.category].name}</Link> › {l.location.district}
       </div>
       <div className="listing">
-        <div>
-          <div className="panel">
+        <div className="lv-main">
+          <div className="panel lv-media">
             <h1>{l.title}</h1>
+            {place && (
+              <p className="lv-loc">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+                <span>{place}</span>
+              </p>
+            )}
             <div className="badges badges-inline"><Badges l={l} /></div>
-            <ListingMedia photos={l.photos} tour={l.tour} startWithTour={startWithTour} />
+            <ListingMedia photos={l.photos} tour={l.tour} startWithTour={startWithTour} title={l.title} />
+            {facts.length > 0 && (
+              <ul className="lv-facts" aria-label="Гол үзүүлэлт">
+                {facts.map(([v, k]) => <li key={k}><b>{v}</b><span>{k}</span></li>)}
+              </ul>
+            )}
           </div>
-          <div className="panel mt-4">
+          <div className="panel lv-details mt-4">
             <h2 className="mt-0">Дэлгэрэнгүй</h2>
             <dl className="specs">{shown.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
             {l.description && <><h3>Тайлбар</h3><p className="desc">{l.description}</p></>}
@@ -87,14 +105,14 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
           </div>
         </div>
         <aside className="side">
-          <div className="panel">
+          <div className="panel lv-buy">
             <div className="price"><Price l={l} /></div>
             {l.pricePerM2 && <div className="muted small">м² — {fmtFull(l.pricePerM2)}</div>}
             <div className="seller my-4">
               <div className="avatar">{l.sellerAvatar ? <img src={l.sellerAvatar} alt="" /> : l.sellerName.slice(0, 1)}</div>
               <div><b>{l.sellerName}</b><div className="muted small">{l.sellerType === 'owner' ? 'Эзэмшигч' : 'Агент'}</div></div>
             </div>
-            {l.status === 'active' ? <PhoneAndFav id={l.id} title={l.title} image={l.photos[0]?.src} />
+            {l.status === 'active' ? <PhoneAndFav id={l.id} title={l.title} image={l.photos[0]?.src} price={<Price l={l} />} />
               : l.status === 'unpaid' ? <>
                   <div className="muted small mb-3">Төлбөр төлөгдөөгүй тул зар нийтлэгдээгүй байна.</div>
                   <Link className="btn btn-primary btn-block" href={`/pay/${l.id}`}>Төлбөр төлөх</Link>
@@ -102,7 +120,7 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
               : <div className="muted small">Зар нийтлэгдээгүй байна — утас харагдахгүй.</div>}
           </div>
           {l.status === 'active' && <InquiryForm id={l.id} title={l.title} />}
-          <div className="panel">
+          <div className="panel lv-meta">
             <div className="kv"><span>Зарын дугаар</span><b>{l.id}</b></div>
             <div className="kv"><span>Нийтэлсэн</span><span>{fmtDate(l.createdAt)} ({timeAgo(l.createdAt)})</span></div>
             <div className="kv"><span>Үзсэн</span><span>{l.views}</span></div>
@@ -111,10 +129,13 @@ export default function ListingView({ id, startWithTour }: { id: string; startWi
           </div>
         </aside>
       </div>
-      <h2>Төстэй зар</h2>
-      {similar === 'failed' ? <LoadError compact message="Төстэй зар ачаалж чадсангүй." onRetry={() => setAttempt((a) => a + 1)} />
-        : similar ? <Grid items={similar} empty="Төстэй зар алга" />
-        : <div className="grid" aria-busy="true" aria-label="Ачаалж байна">{[0, 1, 2, 3].map((i) => <div key={i} className="card card-skeleton" />)}</div>}
+      {/* nothing similar: leave the section out instead of a heading over an empty space */}
+      {!(Array.isArray(similar) && similar.length === 0) && <>
+        <h2>Төстэй зар</h2>
+        {similar === 'failed' ? <LoadError compact message="Төстэй зар ачаалж чадсангүй." onRetry={() => setAttempt((a) => a + 1)} />
+          : similar ? <Grid items={similar} />
+          : <div className="grid" aria-busy="true" aria-label="Ачаалж байна">{[0, 1, 2, 3].map((i) => <div key={i} className="card card-skeleton" />)}</div>}
+      </>}
     </>
   );
 }
